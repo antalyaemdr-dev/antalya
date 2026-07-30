@@ -1,166 +1,83 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
-import { LogOut, Calendar, Clock, User, Phone, Mail } from "lucide-react";
+import { Users, Calendar, Briefcase, FileText } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-export default function AdminDashboard() {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
-  const [appointments, setAppointments] = useState<any[]>([]);
+export default function Dashboard() {
+  const [stats, setStats] = useState({ appointments: 0, services: 0, blogs: 0 });
+
+  // İleride Google Analytics bağlandığında gerçek veri basılabilir, şu an görsel zenginlik için mock data.
+  const visitorData = [
+    { name: 'Pzt', ziyaret: 120 }, { name: 'Sal', ziyaret: 150 }, { name: 'Çar', ziyaret: 180 },
+    { name: 'Per', ziyaret: 140 }, { name: 'Cum', ziyaret: 210 }, { name: 'Cts', ziyaret: 250 }, { name: 'Paz', ziyaret: 280 },
+  ];
 
   useEffect(() => {
-    // 1. GÜVENLİK KONTROLÜ: Kullanıcı giriş yapmış mı?
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    const fetchStats = async () => {
+      const [apt, srv, blg] = await Promise.all([
+        supabase.from('appointments').select('id', { count: 'exact' }),
+        supabase.from('services').select('id', { count: 'exact' }),
+        supabase.from('blogs').select('id', { count: 'exact' })
+      ]);
       
-      if (!session) {
-        // Oturum yoksa login sayfasına at
-        router.push("/admin/login");
-      } else {
-        // Oturum varsa randevuları çek ve sayfayı göster
-        fetchAppointments();
-      }
+      setStats({
+        appointments: apt.count || 0,
+        services: srv.count || 0,
+        blogs: blg.count || 0
+      });
     };
+    fetchStats();
+  }, []);
 
-    checkAuth();
-  }, [router]);
-
-  // 2. VERİ ÇEKME: Veritabanındaki randevuları getir
-  const fetchAppointments = async () => {
-    const { data, error } = await supabase
-      .from("appointments")
-      .select("*")
-      .order("created_at", { ascending: false }); // En yeni randevular en üstte
-
-    if (data) {
-      setAppointments(data);
-    }
-    setIsLoading(false);
-  };
-
-  // 3. ÇIKIŞ YAPMA İŞLEMİ
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/admin/login");
-  };
-
-  // Yükleme esnasında boş beyaz ekran yerine loader göster
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-mediterranean"></div>
-      </div>
-    );
-  }
+  const statCards = [
+    { title: "Toplam Randevu", value: stats.appointments, icon: <Calendar size={28}/>, color: "text-blue-600", bg: "bg-blue-50" },
+    { title: "Aktif Hizmetler", value: stats.services, icon: <Briefcase size={28}/>, color: "text-[#e6c15c]", bg: "bg-[#e6c15c]/10" },
+    { title: "Yayındaki Bloglar", value: stats.blogs, icon: <FileText size={28}/>, color: "text-green-600", bg: "bg-green-50" },
+    { title: "Bu Hafta Ziyaret", value: "1,330", icon: <Users size={28}/>, color: "text-purple-600", bg: "bg-purple-50" } // Örnek Veri
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      
-      {/* Üst Menü (Admin Header) */}
-      <header className="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center sticky top-0 z-10 shadow-sm">
-        <div>
-          <h1 className="text-2xl font-extrabold text-gray-900">Yönetim Paneli</h1>
-          <p className="text-sm text-gray-500 font-medium">Hoş geldiniz, tüm randevu ve talepleri buradan yönetebilirsiniz.</p>
-        </div>
-        <button 
-          onClick={handleLogout}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
-        >
-          <LogOut size={18} /> Çıkış Yap
-        </button>
-      </header>
+    <div className="max-w-7xl mx-auto pb-24">
+      <div className="mb-10">
+        <h1 className="text-3xl font-extrabold text-gray-900">Hoş Geldiniz, Meryem Hanım 👋</h1>
+        <p className="text-gray-500 mt-2">Sitenizin güncel durumu ve özet istatistikleriniz aşağıdadır.</p>
+      </div>
 
-      {/* Ana İçerik Alanı */}
-      <main className="p-8 max-w-7xl mx-auto">
-        
-        {/* İstatistik Kartları */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 bg-mediterranean/10 text-mediterranean rounded-xl flex items-center justify-center">
-              <Calendar size={24} />
+      {/* İstatistik Kartları */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        {statCards.map((stat, index) => (
+          <div key={index} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-6">
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${stat.bg} ${stat.color}`}>
+              {stat.icon}
             </div>
             <div>
-              <p className="text-sm text-gray-500 font-bold">Toplam Randevu Talebi</p>
-              <p className="text-2xl font-extrabold text-gray-900">{appointments.length}</p>
+              <p className="text-gray-500 font-medium text-sm mb-1">{stat.title}</p>
+              <h3 className="text-3xl font-extrabold text-[#031321]">{stat.value}</h3>
             </div>
           </div>
-        </div>
+        ))}
+      </div>
 
-        {/* Randevular Tablosu */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-gray-100 bg-gray-50/50">
-            <h2 className="text-lg font-bold text-gray-900">Son Gelen Randevular</h2>
-          </div>
-          
-          <div className="overflow-x-auto">
-            {appointments.length === 0 ? (
-              <div className="p-8 text-center text-gray-500 font-medium">
-                Henüz bir randevu talebi bulunmuyor.
-              </div>
-            ) : (
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-100 text-sm text-gray-500 uppercase tracking-wider">
-                    <th className="p-4 font-bold">Danışan</th>
-                    <th className="p-4 font-bold">İletişim</th>
-                    <th className="p-4 font-bold">Hizmet & Tip</th>
-                    <th className="p-4 font-bold">Mesaj</th>
-                    <th className="p-4 font-bold">Tarih</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {appointments.map((app) => (
-                    <tr key={app.id} className="hover:bg-gray-50/50 transition-colors">
-                      
-                      <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-sand-light text-mediterranean-dark font-bold flex items-center justify-center">
-                            {app.first_name[0]}{app.last_name[0]}
-                          </div>
-                          <div>
-                            <p className="font-bold text-gray-900">{app.first_name} {app.last_name}</p>
-                          </div>
-                        </div>
-                      </td>
-                      
-                      <td className="p-4 space-y-1">
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Phone size={14} className="text-gray-400" /> {app.phone}
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Mail size={14} className="text-gray-400" /> {app.email}
-                        </div>
-                      </td>
-                      
-                      <td className="p-4">
-                        <p className="font-bold text-mediterranean-dark text-sm">{app.service}</p>
-                        <span className="inline-block mt-1 px-2.5 py-1 text-xs font-bold bg-sand-light text-gray-700 rounded-md">
-                          {app.type}
-                        </span>
-                      </td>
-                      
-                      <td className="p-4 text-sm text-gray-600 max-w-xs truncate">
-                        {app.message || "-"}
-                      </td>
-                      
-                      <td className="p-4">
-                        <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
-                          <Clock size={14} /> 
-                          {new Date(app.created_at).toLocaleDateString("tr-TR")}
-                        </div>
-                      </td>
-                      
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+      {/* Grafik Alanı */}
+      <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+        <h2 className="text-xl font-extrabold text-[#031321] mb-8">Haftalık Web Sitesi Trafiği (Temsili)</h2>
+        <div className="h-[300px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={visitorData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF'}} dy={10} />
+              <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF'}} dx={-10} />
+              <Tooltip 
+                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                cursor={{ stroke: '#f3f4f6', strokeWidth: 2 }}
+              />
+              <Line type="monotone" dataKey="ziyaret" stroke="#006699" strokeWidth={4} dot={{ r: 6, fill: '#e6c15c', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 8 }} />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
-
-      </main>
+      </div>
     </div>
   );
 }

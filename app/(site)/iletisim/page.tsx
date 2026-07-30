@@ -111,8 +111,47 @@ export default function Iletisim() {
                 referrerPolicy="no-referrer-when-downgrade"
              ></iframe>
           </div>
-
+        
         </div>
+        {/* İletişim Formu (Mevcut Harita ve Bilgilerin Altına Eklenecek) */}
+          {/* HATA ÇÖZÜMÜ: max-w-4xl mx-auto kısımları silindi, w-full bırakıldı */}
+          <div className="mt-24 bg-white p-8 md:p-12 rounded-3xl shadow-2xl border border-gray-100 w-full">
+            <h2 className="text-3xl font-extrabold text-[#031321] mb-2 text-center">Bize Mesaj Gönderin</h2>
+            <p className="text-gray-500 text-center mb-10">Sorularınız için aşağıdaki formu doldurarak bize ulaşabilirsiniz.</p>
+            
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const data = {
+                name: formData.get('name'), email: formData.get('email'), subject: formData.get('subject'), message: formData.get('message')
+              };
+              await fetch('/api/send-email', { method: 'POST', body: JSON.stringify({ type: 'contact', data }) });
+              alert('Mesajınız başarıyla gönderildi!');
+              (e.target as HTMLFormElement).reset();
+            }} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Adınız Soyadınız</label>
+                  <input name="name" required type="text" className="w-full bg-gray-50 border border-gray-200 px-5 py-4 rounded-xl outline-none focus:border-[#006699]" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">E-Posta Adresiniz</label>
+                  <input name="email" required type="email" className="w-full bg-gray-50 border border-gray-200 px-5 py-4 rounded-xl outline-none focus:border-[#006699]" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Konu</label>
+                <input name="subject" required type="text" className="w-full bg-gray-50 border border-gray-200 px-5 py-4 rounded-xl outline-none focus:border-[#006699]" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Mesajınız</label>
+                <textarea name="message" required rows={4} className="w-full bg-gray-50 border border-gray-200 px-5 py-4 rounded-xl outline-none focus:border-[#006699] resize-none" />
+              </div>
+              <button type="submit" className="w-full bg-[#006699] text-white py-4 rounded-xl font-bold text-lg hover:bg-[#031321] transition-all">
+                Mesajı Gönder
+              </button>
+            </form>
+          </div>
       </div>
     </div>
   );

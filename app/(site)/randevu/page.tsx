@@ -1,217 +1,109 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "../../../lib/supabase";
-import { CheckCircle2, ChevronRight, ChevronLeft, Monitor, Users, Sparkles } from "lucide-react";
+import { Calendar, User, Phone, Mail, Send } from "lucide-react";
 
-export default function Randevu() {
-  const [step, setStep] = useState(1);
-  const [services, setServices] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export default function RandevuSayfasi() {
+  const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-
-  // Form Verileri
+  
   const [formData, setFormData] = useState({
-    service: "",
-    type: "",
-    first_name: "",
-    last_name: "",
-    email: "",
-    phone: "",
-    message: "",
+    full_name: "", phone: "", email: "", service_type: "EMDR Terapisi", preferred_date: "", message: ""
   });
 
-  // Sayfa yüklendiğinde Supabase'den aktif hizmetleri çek
-  useEffect(() => {
-    async function fetchServices() {
-      const { data } = await supabase.from("services").select("title").eq("is_active", true);
-      if (data) setServices(data);
-      setIsLoading(false);
-    }
-    fetchServices();
-  }, []);
-
-  // Form Gönderme İşlemi
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setIsLoading(true);
 
-    const { error } = await supabase.from("appointments").insert([formData]);
+    try {
+      // Ad Soyad alanını boşluktan ikiye bölüp first_name ve last_name yapıyoruz
+      const nameParts = formData.full_name.trim().split(' ');
+      const first_name = nameParts.slice(0, -1).join(' ') || formData.full_name;
+      const last_name = nameParts.length > 1 ? nameParts[nameParts.length - 1] : "";
 
-    setIsSubmitting(false);
-    
-    if (!error) {
+      const dbData = {
+        first_name: first_name,
+        last_name: last_name,
+        phone: formData.phone,
+        email: formData.email,
+        service_type: formData.service_type,
+        preferred_date: formData.preferred_date,
+        message: formData.message
+      };
+
+      // 1. Veritabanına Kaydet
+      await supabase.from("appointments").insert([dbData]);
+
+      // 2. Mail Gönder (API'ye eski formData'yı atıyoruz ki mail formatı bozulmasın)
+      await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'appointment', data: formData })
+      });
+
       setIsSuccess(true);
-      // İleride buraya E-posta bildirim tetikleyicisi (örnek: Resend/Nodemailer) eklenecek
-    } else {
-      alert("Bir hata oluştu, lütfen tekrar deneyin.");
+      setFormData({ full_name: "", phone: "", email: "", service_type: "EMDR Terapisi", preferred_date: "", message: "" });
+    } catch (error) {
+      alert("Bir hata oluştu, lütfen daha sonra tekrar deneyin.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-sand-light/30 py-16">
-      <div className="container mx-auto px-4 max-w-3xl">
+    <div className="min-h-screen bg-[#FAFAFA] pt-32 pb-24">
+      <div className="max-w-4xl mx-auto px-4">
         
-        {/* Başlık Alanı */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-extrabold text-gray-900 mb-4">Randevu Oluştur</h1>
-          <p className="text-gray-600 font-medium">Size en uygun hizmeti seçerek ilk adımı atın.</p>
+        <div className="text-center mb-16">
+          <span className="text-[#e6c15c] font-bold tracking-widest uppercase text-sm mb-3 block">Online Rezervasyon</span>
+          <h1 className="text-4xl md:text-5xl font-extrabold text-[#031321] mb-6">Randevu Talebi Oluşturun</h1>
+          <p className="text-gray-500 max-w-2xl mx-auto">Formu doldurduktan sonra en kısa sürede sizinle iletişime geçerek randevu saatinizi kesinleştireceğiz.</p>
         </div>
 
         {isSuccess ? (
-          // BAŞARILI EKRANI
-          <div className="bg-white p-12 rounded-3xl shadow-xl border border-sand-dark/20 text-center">
-            <CheckCircle2 className="w-20 h-20 text-green-500 mx-auto mb-6" />
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Talebiniz Alındı!</h2>
-            <p className="text-gray-600 mb-8 text-lg">
-              Sayın {formData.first_name}, randevu talebiniz başarıyla bize ulaştı. Müsaitlik durumuna göre en kısa sürede sizinle iletişime geçeceğiz.
-            </p>
-            <button onClick={() => window.location.href = '/'} className="bg-mediterranean text-white px-8 py-3 rounded-xl font-bold hover:bg-mediterranean-dark transition-all">
-              Ana Sayfaya Dön
-            </button>
+          <div className="bg-green-50 border-2 border-green-500 rounded-3xl p-12 text-center">
+            <h2 className="text-3xl font-bold text-green-700 mb-4">Talebiniz Alındı!</h2>
+            <p className="text-green-600">Randevu talebiniz bize başarıyla ulaştı. En kısa sürede sizinle iletişime geçeceğiz.</p>
+            <button onClick={() => setIsSuccess(false)} className="mt-8 bg-green-600 text-white px-8 py-3 rounded-xl font-bold">Yeni Talep Oluştur</button>
           </div>
         ) : (
-          // FORM ALANI
-          <div className="bg-white rounded-3xl shadow-xl border border-sand-dark/10 overflow-hidden">
-            
-            {/* İlerleme Çubuğu */}
-            <div className="bg-sand-light px-8 py-4 flex justify-between items-center border-b border-sand-dark/20">
-              <div className={`text-sm font-bold ${step >= 1 ? 'text-mediterranean' : 'text-gray-400'}`}>1. Hizmet</div>
-              <div className={`h-1 w-12 rounded-full ${step >= 2 ? 'bg-mediterranean' : 'bg-gray-200'}`}></div>
-              <div className={`text-sm font-bold ${step >= 2 ? 'text-mediterranean' : 'text-gray-400'}`}>2. Görüşme Tipi</div>
-              <div className={`h-1 w-12 rounded-full ${step >= 3 ? 'bg-mediterranean' : 'bg-gray-200'}`}></div>
-              <div className={`text-sm font-bold ${step >= 3 ? 'text-mediterranean' : 'text-gray-400'}`}>3. Bilgiler</div>
+          <form onSubmit={handleSubmit} className="bg-white p-8 md:p-12 rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2"><User size={16}/> Ad Soyad</label>
+                <input required type="text" value={formData.full_name} onChange={(e) => setFormData({...formData, full_name: e.target.value})} className="w-full bg-gray-50 border border-gray-200 px-5 py-4 rounded-xl outline-none focus:border-[#006699] focus:bg-white transition-all" placeholder="Adınız Soyadınız" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2"><Phone size={16}/> Telefon Numarası</label>
+                <input required type="tel" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="w-full bg-gray-50 border border-gray-200 px-5 py-4 rounded-xl outline-none focus:border-[#006699] focus:bg-white transition-all" placeholder="0 (555) 000 00 00" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2"><Mail size={16}/> E-Posta (İsteğe Bağlı)</label>
+                <input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full bg-gray-50 border border-gray-200 px-5 py-4 rounded-xl outline-none focus:border-[#006699] focus:bg-white transition-all" placeholder="ornek@mail.com" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2"><Calendar size={16}/> Tercih Edilen Tarih</label>
+                <input type="date" value={formData.preferred_date} onChange={(e) => setFormData({...formData, preferred_date: e.target.value})} className="w-full bg-gray-50 border border-gray-200 px-5 py-4 rounded-xl outline-none focus:border-[#006699] focus:bg-white transition-all text-gray-600" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-bold text-gray-700 mb-2">Hizmet Seçimi</label>
+                <select value={formData.service_type} onChange={(e) => setFormData({...formData, service_type: e.target.value})} className="w-full bg-gray-50 border border-gray-200 px-5 py-4 rounded-xl outline-none focus:border-[#006699] focus:bg-white transition-all">
+                  <option value="EMDR Terapisi">EMDR Terapisi</option>
+                  <option value="Bireysel Danışmanlık">Bireysel Danışmanlık</option>
+                  <option value="Çift Terapisi">Çift Terapisi</option>
+                  <option value="Online Danışmanlık">Online Danışmanlık</option>
+                </select>
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-bold text-gray-700 mb-2">Eklemek İstedikleriniz (Kısaca)</label>
+                <textarea rows={4} value={formData.message} onChange={(e) => setFormData({...formData, message: e.target.value})} className="w-full bg-gray-50 border border-gray-200 px-5 py-4 rounded-xl outline-none focus:border-[#006699] focus:bg-white transition-all resize-none" placeholder="Bize iletmek istediğiniz notlar..." />
+              </div>
             </div>
-
-            <div className="p-8 md:p-12">
-              
-              {/* ADIM 1: HİZMET SEÇİMİ */}
-              {step === 1 && (
-                <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-6">Hangi hizmetten faydalanmak istersiniz?</h3>
-                  {isLoading ? (
-                    <div className="text-center py-8 text-gray-500">Hizmetler yükleniyor...</div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {services.map((srv, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setFormData({ ...formData, service: srv.title })}
-                          className={`p-6 rounded-2xl border-2 text-left flex items-start gap-4 transition-all duration-200 ${
-                            formData.service === srv.title 
-                              ? 'border-mediterranean bg-mediterranean/5 shadow-md' 
-                              : 'border-gray-100 hover:border-sand-dark/50 hover:bg-sand-light/50'
-                          }`}
-                        >
-                          <Sparkles className={`w-6 h-6 flex-shrink-0 ${formData.service === srv.title ? 'text-mediterranean' : 'text-gray-400'}`} />
-                          <span className={`font-bold text-lg ${formData.service === srv.title ? 'text-mediterranean-dark' : 'text-gray-700'}`}>
-                            {srv.title}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  <div className="mt-10 flex justify-end">
-                    <button 
-                      onClick={() => setStep(2)} 
-                      disabled={!formData.service}
-                      className="flex items-center gap-2 bg-mediterranean text-white px-8 py-3 rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-mediterranean-dark transition-all"
-                    >
-                      Devam Et <ChevronRight size={20} />
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* ADIM 2: GÖRÜŞME TİPİ */}
-              {step === 2 && (
-                <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-6">Görüşme şeklini seçin</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <button
-                      onClick={() => setFormData({ ...formData, type: "Online" })}
-                      className={`p-8 rounded-2xl border-2 text-center flex flex-col items-center gap-4 transition-all duration-200 ${
-                        formData.type === "Online" 
-                          ? 'border-mediterranean bg-mediterranean/5 shadow-md' 
-                          : 'border-gray-100 hover:border-sand-dark/50 hover:bg-sand-light/50'
-                      }`}
-                    >
-                      <Monitor className={`w-12 h-12 ${formData.type === "Online" ? 'text-mediterranean' : 'text-gray-400'}`} />
-                      <span className={`font-bold text-xl ${formData.type === "Online" ? 'text-mediterranean-dark' : 'text-gray-700'}`}>Online Danışmanlık</span>
-                    </button>
-                    
-                    <button
-                      onClick={() => setFormData({ ...formData, type: "Yüz Yüze" })}
-                      className={`p-8 rounded-2xl border-2 text-center flex flex-col items-center gap-4 transition-all duration-200 ${
-                        formData.type === "Yüz Yüze" 
-                          ? 'border-mediterranean bg-mediterranean/5 shadow-md' 
-                          : 'border-gray-100 hover:border-sand-dark/50 hover:bg-sand-light/50'
-                      }`}
-                    >
-                      <Users className={`w-12 h-12 ${formData.type === "Yüz Yüze" ? 'text-mediterranean' : 'text-gray-400'}`} />
-                      <span className={`font-bold text-xl ${formData.type === "Yüz Yüze" ? 'text-mediterranean-dark' : 'text-gray-700'}`}>Yüz Yüze Görüşme</span>
-                    </button>
-                  </div>
-                  <div className="mt-10 flex justify-between">
-                    <button onClick={() => setStep(1)} className="flex items-center gap-2 text-gray-500 font-bold hover:text-gray-800 transition-colors">
-                      <ChevronLeft size={20} /> Geri
-                    </button>
-                    <button 
-                      onClick={() => setStep(3)} 
-                      disabled={!formData.type}
-                      className="flex items-center gap-2 bg-mediterranean text-white px-8 py-3 rounded-xl font-bold disabled:opacity-50 hover:bg-mediterranean-dark transition-all"
-                    >
-                      Devam Et <ChevronRight size={20} />
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* ADIM 3: KİŞİSEL BİLGİLER */}
-              {step === 3 && (
-                <form onSubmit={handleSubmit} className="animate-in fade-in slide-in-from-right-4 duration-500">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-6">İletişim Bilgileriniz</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">Adınız *</label>
-                      <input required type="text" value={formData.first_name} onChange={(e) => setFormData({...formData, first_name: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-mediterranean focus:ring-2 focus:ring-mediterranean/20 outline-none transition-all" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">Soyadınız *</label>
-                      <input required type="text" value={formData.last_name} onChange={(e) => setFormData({...formData, last_name: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-mediterranean focus:ring-2 focus:ring-mediterranean/20 outline-none transition-all" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">E-posta Adresiniz *</label>
-                      <input required type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-mediterranean focus:ring-2 focus:ring-mediterranean/20 outline-none transition-all" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">Telefon Numaranız *</label>
-                      <input required type="tel" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-mediterranean focus:ring-2 focus:ring-mediterranean/20 outline-none transition-all" />
-                    </div>
-                  </div>
-                  <div className="mb-8">
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Eklemek İstediğiniz Mesaj (Opsiyonel)</label>
-                    <textarea rows={4} value={formData.message} onChange={(e) => setFormData({...formData, message: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-mediterranean focus:ring-2 focus:ring-mediterranean/20 outline-none transition-all resize-none"></textarea>
-                  </div>
-                  
-                  <div className="mt-10 flex justify-between items-center">
-                    <button type="button" onClick={() => setStep(2)} className="flex items-center gap-2 text-gray-500 font-bold hover:text-gray-800 transition-colors">
-                      <ChevronLeft size={20} /> Geri
-                    </button>
-                    <button 
-                      type="submit" 
-                      disabled={isSubmitting}
-                      className="bg-mediterranean text-white px-10 py-4 rounded-xl font-bold disabled:opacity-70 hover:bg-mediterranean-dark hover:shadow-lg transition-all"
-                    >
-                      {isSubmitting ? 'Gönderiliyor...' : 'Randevu Talebini Gönder'}
-                    </button>
-                  </div>
-                </form>
-              )}
-
-            </div>
-          </div>
+            <button type="submit" disabled={isLoading} className="w-full bg-[#031321] text-white py-5 rounded-xl font-extrabold text-lg hover:bg-[#006699] transition-all flex items-center justify-center gap-2 shadow-xl">
+              {isLoading ? "Gönderiliyor..." : <><Send size={20}/> Randevu Talebini Gönder</>}
+            </button>
+          </form>
         )}
       </div>
     </div>

@@ -2,20 +2,22 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, User, Settings, ClipboardList, Briefcase, Calendar, Home } from "lucide-react";
+import { LayoutDashboard, User, Settings, ClipboardList, Briefcase, Calendar, Home, FileText, Star, } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   const menuItems = [
-    { name: "Dashboard", path: "/admin", icon: <LayoutDashboard size={20} /> },
-    { name: "Ana Sayfa", path: "/admin/anasayfa", icon: <Home size={20} /> },
-    { name: "Hakkımda", path: "/admin/hakkimda", icon: <User size={20} /> },
-    { name: "Hizmetlerimiz", path: "/admin/hizmetler", icon: <Briefcase size={20} /> },
-    { name: "Online Testler", path: "/admin/online-testler", icon: <ClipboardList size={20} /> },
-    { name: "Randevular", path: "/admin/randevular", icon: <Calendar size={20} /> },
-    { name: "Site Ayarları", path: "/admin/ayarlar", icon: <Settings size={20} /> },
-  ];
+  { name: "Genel Bakış", path: "/admin", icon: <LayoutDashboard size={20} /> },
+  { name: "Ana Sayfa", path: "/admin/anasayfa", icon: <Home size={20} /> },
+  { name: "Hakkımda", path: "/admin/hakkimda", icon: <User size={20} /> },
+  { name: "Hizmetlerimiz", path: "/admin/hizmetler", icon: <Briefcase size={20} /> },
+  { name: "Blog", path: "/admin/blog", icon: <FileText size={20} /> },
+  { name: "Öneriler", path: "/admin/oneriler", icon: <Star size={20} /> },
+  { name: "Online Testler", path: "/admin/online-testler", icon: <ClipboardList size={20} /> },
+  { name: "Randevular", path: "/admin/randevular", icon: <Calendar size={20} /> },
+  { name: "Site Ayarları", path: "/admin/ayarlar", icon: <Settings size={20} /> },
+];
 
   return (
     <div className="flex min-h-screen bg-gray-50">
