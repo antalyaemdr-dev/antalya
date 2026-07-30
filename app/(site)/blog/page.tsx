@@ -16,18 +16,21 @@ export default function BlogListesi() {
     fetchBlogs();
   }, []);
 
-  // HTML etiketlerini temizleyip kelime sayısına göre okuma süresi hesaplama
   const calculateReadTime = (htmlContent: string) => {
     if (!htmlContent) return 1;
-    const text = htmlContent.replace(/<[^>]*>?/gm, '');
+    const text = htmlContent.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ');
     const wordCount = text.split(/\s+/).length;
-    return Math.ceil(wordCount / 200); // Ortalama 200 kelime/dakika
+    return Math.ceil(wordCount / 200); 
   };
 
-  // HTML etiketlerini temizleyip özet çıkarma
+  // HTML etiketlerini ve bozuk karakterleri temizleyen özet fonksiyonu
   const generateExcerpt = (htmlContent: string) => {
     if (!htmlContent) return "";
-    const text = htmlContent.replace(/<[^>]*>?/gm, '');
+    const text = htmlContent
+      .replace(/<[^>]*>?/gm, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&');
+      
     return text.substring(0, 120) + "...";
   };
 

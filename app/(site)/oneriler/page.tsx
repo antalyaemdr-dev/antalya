@@ -18,6 +18,15 @@ export default function OnerilerListesi() {
   const filters = ["Tümü", "Kitap", "Film", "Belgesel", "Podcast"];
   const filteredItems = activeFilter === "Tümü" ? items : items.filter(item => item.type === activeFilter);
 
+  // Kopyala-yapıştır ile gelebilecek bozuk karakterleri ve HTML etiketlerini temizleyen fonksiyon
+  const cleanText = (text: string) => {
+    if (!text) return "";
+    return text
+      .replace(/<[^>]*>?/gm, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&');
+  };
+
   return (
     <div className="min-h-screen bg-[#FAFAFA] pt-32 pb-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -50,7 +59,10 @@ export default function OnerilerListesi() {
               </div>
               <div className="p-6 flex flex-col flex-grow">
                 <h3 className="text-xl font-bold text-[#031321] mb-3">{item.title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed font-light">{item.description}</p>
+                {/* cleanText fonksiyonunu açıklama metnine uyguluyoruz */}
+                <p className="text-gray-500 text-sm leading-relaxed font-light">
+                  {cleanText(item.description)}
+                </p>
               </div>
             </div>
           ))}
