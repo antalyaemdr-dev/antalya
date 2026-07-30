@@ -3,125 +3,121 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, ChevronRight } from "lucide-react";
+import { Menu, X, ChevronRight, ChevronDown } from "lucide-react";
+import { supabase } from "../lib/supabase"; // Supabase yolunuzu kontrol edin
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isServicesOpen, setIsServicesOpen] = useState(false); // Mobilde açılır menü için
+  const [services, setServices] = useState<any[]>([]);
   const pathname = usePathname();
 
-  // Sayfa değiştiğinde mobil menüyü otomatik kapat
   useEffect(() => {
     setIsMenuOpen(false);
+    setIsServicesOpen(false);
   }, [pathname]);
 
-  // Menü açıkken arka planın kaymasını engelle
   useEffect(() => {
-    if (isMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
+    if (isMenuOpen) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "unset";
   }, [isMenuOpen]);
 
-  const navLinks = [
-    { name: "Ana Sayfa", href: "/" },
-    { name: "Hakkımda", href: "/hakkimda" },
-    { name: "Hizmetlerimiz", href: "/hizmetlerimiz" },
-    { name: "Blog", href: "/blog" },
-    { name: "İletişim", href: "/iletisim" },
-  ];
+  // Menü için hizmetleri sıra numarasına göre (sort_order) çekiyoruz
+  useEffect(() => {
+    const fetchServicesForMenu = async () => {
+      const { data } = await supabase.from("services").select("title, slug").order("sort_order", { ascending: true });
+      if (data) setServices(data);
+    };
+    fetchServicesForMenu();
+  }, []);
 
   return (
     <>
-      {/* Üst Menü Sabit Yüksekliği: h-[88px] - Bu değer Hero'nun boyunu hesaplamak için çok önemli */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-50 h-[88px] flex items-center">
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           
-          {/* Sol: Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            {/* Not: Aşağıdaki src kısmına kendi logonuzun yolunu yazın (örn: /logo.png) */}
+          <Link href="/" className="flex items-center gap-2 flex-shrink-0">
             <img src="/images/logo/logo.webp" alt="Antalya EMDR Logo" className="h-12 w-auto object-contain" />
           </Link>
 
-          {/* Orta: Masaüstü Linkler */}
-          <nav className="hidden md:flex gap-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                href={link.href}
-                className={`text-sm font-bold transition-colors ${
-                  pathname === link.href ? "text-[#006699] border-b-2 border-[#006699]" : "text-gray-600 hover:text-[#006699]"
-                }`}
-              >
-                {link.name}
+          <nav className="hidden lg:flex items-center gap-4 xl:gap-8">
+            <Link href="/" className={`text-[15px] font-bold transition-colors py-2 ${pathname === "/" ? "text-[#006699]" : "text-gray-700 hover:text-[#006699]"}`}>Ana Sayfa</Link>
+            <Link href="/hakkimda" className={`text-[15px] font-bold transition-colors py-2 ${pathname === "/hakkimda" ? "text-[#006699]" : "text-gray-700 hover:text-[#006699]"}`}>Hakkımda</Link>
+            
+            {/* HİZMETLERİMİZ AÇILIR MENÜSÜ (DROPDOWN) */}
+            <div className="relative group py-2">
+              <Link href="/hizmetlerimiz" className={`flex items-center gap-1 text-[15px] font-bold transition-colors ${pathname.includes("/hizmetlerimiz") ? "text-[#006699]" : "text-gray-700 hover:text-[#006699]"}`}>
+                Hizmetlerimiz <ChevronDown size={14} className="transform group-hover:rotate-180 transition-transform" />
               </Link>
-            ))}
+              
+              {/* Dropdown Kutusu */}
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 before:absolute before:-top-4 before:left-0 before:w-full before:h-4">
+                <div className="p-2 flex flex-col">
+                  <Link href="/hizmetlerimiz" className="px-4 py-2 text-[#006699] font-extrabold text-sm border-b border-gray-50 mb-1 hover:bg-gray-50 rounded-lg">Tümünü Gör</Link>
+                  {services.map(srv => (
+                    <Link key={srv.slug} href={`/hizmetlerimiz/${srv.slug}`} className="px-4 py-2.5 text-gray-600 font-medium text-sm hover:text-[#006699] hover:bg-[#006699]/5 rounded-xl transition-colors">
+                      {srv.title}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <Link href="/blog" className={`text-[15px] font-bold transition-colors py-2 ${pathname === "/blog" ? "text-[#006699]" : "text-gray-700 hover:text-[#006699]"}`}>Blog</Link>
+            <Link href="/oneriler" className={`text-[15px] font-bold transition-colors py-2 ${pathname === "/oneriler" ? "text-[#006699]" : "text-gray-700 hover:text-[#006699]"}`}>Öneriler</Link>
+            <Link href="/online-testler" className={`text-[15px] font-bold transition-colors py-2 ${pathname === "/online-testler" ? "text-[#006699]" : "text-gray-700 hover:text-[#006699]"}`}>Online Testler</Link>
+            <Link href="/iletisim" className={`text-[15px] font-bold transition-colors py-2 ${pathname === "/iletisim" ? "text-[#006699]" : "text-gray-700 hover:text-[#006699]"}`}>İletişim</Link>
           </nav>
 
-          {/* Sağ: Masaüstü Buton & Mobil Hamburger */}
           <div className="flex items-center gap-4">
-            <Link
-              href="/randevu"
-              className="hidden md:flex bg-[#006699] text-white px-6 py-2.5 rounded-lg font-bold hover:bg-[#004d73] transition-colors"
-            >
+            <Link href="/randevu" className="hidden md:flex bg-[#006699] text-white px-6 py-2.5 rounded-lg font-bold hover:bg-[#004d73] transition-colors">
               Randevu Al
             </Link>
-            
-            {/* Mobil Menü Açma Butonu */}
-            <button
-              onClick={() => setIsMenuOpen(true)}
-              className="md:hidden p-2 text-gray-600 hover:text-[#006699] transition-colors"
-            >
+            <button onClick={() => setIsMenuOpen(true)} className="lg:hidden p-2 text-gray-600 hover:text-[#006699]">
               <Menu size={28} />
             </button>
           </div>
         </div>
       </header>
 
-      {/* --- MOBİL MENÜ ÇEKMECESİ (OFF-CANVAS) --- */}
-      {/* Karanlık Arka Plan (Overlay) */}
-      <div 
-        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] transition-opacity duration-300 md:hidden ${
-          isMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"
-        }`}
-        onClick={() => setIsMenuOpen(false)}
-      />
+      {/* MOBİL MENÜ */}
+      <div className={`fixed inset-0 bg-black/60 z-[60] lg:hidden ${isMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"}`} onClick={() => setIsMenuOpen(false)} />
 
-      {/* Sağdan Gelen Menü Paneli */}
-      <div
-        className={`fixed top-0 right-0 h-full w-[280px] bg-white z-[70] shadow-2xl transform transition-transform duration-300 ease-in-out md:hidden flex flex-col ${
-          isMenuOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        <div className="p-6 flex justify-between items-center border-b border-gray-100">
+      <div className={`fixed top-0 right-0 h-full w-[280px] sm:w-[320px] bg-white z-[70] shadow-2xl transform transition-transform duration-300 flex flex-col ${isMenuOpen ? "translate-x-0" : "translate-x-full"}`}>
+        <div className="p-6 flex justify-between items-center border-b">
           <span className="font-extrabold text-[#006699]">Menü</span>
-          <button onClick={() => setIsMenuOpen(false)} className="p-2 text-gray-400 hover:text-red-500 bg-gray-50 rounded-full transition-colors">
-            <X size={24} />
-          </button>
+          <button onClick={() => setIsMenuOpen(false)} className="p-2 text-gray-400 hover:text-red-500 bg-gray-50 rounded-full"><X size={24} /></button>
         </div>
 
-        <nav className="flex-grow p-6 flex flex-col gap-4">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              href={link.href}
-              className={`flex items-center justify-between p-3 rounded-xl font-bold transition-colors ${
-                pathname === link.href ? "bg-[#006699]/10 text-[#006699]" : "text-gray-700 hover:bg-gray-50"
-              }`}
-            >
-              {link.name}
-              <ChevronRight size={16} className={pathname === link.href ? "text-[#006699]" : "text-gray-300"} />
-            </Link>
-          ))}
+        <nav className="flex-grow p-6 flex flex-col gap-2 overflow-y-auto">
+          <Link href="/" className="p-3 font-bold text-gray-700 hover:bg-gray-50 rounded-xl">Ana Sayfa</Link>
+          <Link href="/hakkimda" className="p-3 font-bold text-gray-700 hover:bg-gray-50 rounded-xl">Hakkımda</Link>
+          
+          {/* Mobil Hizmetler Akordeonu */}
+          <div>
+            <button onClick={() => setIsServicesOpen(!isServicesOpen)} className="w-full flex justify-between items-center p-3 font-bold text-gray-700 hover:bg-gray-50 rounded-xl">
+              Hizmetlerimiz <ChevronDown size={16} className={`transform transition-transform ${isServicesOpen ? "rotate-180 text-[#006699]" : ""}`} />
+            </button>
+            {isServicesOpen && (
+              <div className="pl-4 pr-2 py-2 flex flex-col gap-1 border-l-2 border-[#e6c15c] ml-3 mt-1">
+                <Link href="/hizmetlerimiz" className="p-2 text-sm font-extrabold text-[#006699]">Tüm Hizmetler</Link>
+                {services.map(srv => (
+                  <Link key={srv.slug} href={`/hizmetlerimiz/${srv.slug}`} className="p-2 text-sm font-medium text-gray-600 hover:text-[#006699]">
+                    {srv.title}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <Link href="/blog" className="p-3 font-bold text-gray-700 hover:bg-gray-50 rounded-xl">Blog</Link>
+          <Link href="/oneriler" className="p-3 font-bold text-gray-700 hover:bg-gray-50 rounded-xl">Öneriler</Link>
+          <Link href="/online-testler" className="p-3 font-bold text-gray-700 hover:bg-gray-50 rounded-xl">Online Testler</Link>
+          <Link href="/iletisim" className="p-3 font-bold text-gray-700 hover:bg-gray-50 rounded-xl">İletişim</Link>
         </nav>
 
-        <div className="p-6 border-t border-gray-100">
-          <Link
-            href="/randevu"
-            className="w-full flex justify-center bg-[#006699] text-white px-6 py-4 rounded-xl font-bold hover:bg-[#004d73] transition-colors shadow-lg shadow-[#006699]/30"
-          >
-            Hemen Randevu Al
-          </Link>
+        <div className="p-6 border-t">
+          <Link href="/randevu" className="w-full flex justify-center bg-[#006699] text-white px-6 py-4 rounded-xl font-bold shadow-lg">Hemen Randevu Al</Link>
         </div>
       </div>
     </>

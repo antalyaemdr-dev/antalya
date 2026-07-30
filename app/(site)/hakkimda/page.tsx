@@ -1,15 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "../../../lib/supabase";
-import { ChevronDown, X, Award, GraduationCap } from "lucide-react";
+import { ChevronDown, X, Award, GraduationCap, ChevronLeft, ChevronRight } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
+import Autoplay from "embla-carousel-autoplay";
 
 export default function Hakkimda() {
   const [pageData, setPageData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCert, setSelectedCert] = useState<string | null>(null);
-  const [emblaRef] = useEmblaCarousel({ loop: false, align: "start", slidesToScroll: 1 });
+  
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    { loop: true, align: "start", slidesToScroll: 1 },
+    [Autoplay({ delay: 5000, stopOnInteraction: true })]
+  );
+
+  const scrollPrev = useCallback(() => {
+    if (emblaApi) emblaApi.scrollPrev();
+  }, [emblaApi]);
+
+  const scrollNext = useCallback(() => {
+    if (emblaApi) emblaApi.scrollNext();
+  }, [emblaApi]);
 
   useEffect(() => {
     const fetchPage = async () => {
@@ -19,6 +32,15 @@ export default function Hakkimda() {
     };
     fetchPage();
   }, []);
+
+  const cleanHtml = (content: string) => {
+    if (!content) return "";
+    return content
+      .replace(/&nbsp;/g, " ")
+      .replace(/&#160;/g, " ")
+      .replace(/style="[^"]*word-break[^"]*"/gi, '')
+      .replace(/style="[^"]*white-space[^"]*"/gi, '');
+  };
 
   const scrollToBio = () => {
     const element = document.getElementById("detayli-ozgecmis");
@@ -36,12 +58,13 @@ export default function Hakkimda() {
   return (
     <div className="min-h-screen bg-white">
       
-      {/* KESİN ÇÖZÜM: Kopyalanan gizli stilleri ezen ve kelime bütünlüğünü koruyan CSS Bloğu */}
       <style dangerouslySetInnerHTML={{__html: `
-        .force-wrap * {
+        .clean-text, .clean-text * {
           white-space: normal !important;
           word-break: normal !important;
-          word-wrap: break-word !important;
+          overflow-wrap: break-word !important;
+          hyphens: none !important;
+          background-color: transparent !important;
         }
       `}} />
 
@@ -51,10 +74,9 @@ export default function Hakkimda() {
       <section className="pt-32 pb-24 relative overflow-hidden bg-[#FAFAFA]">
         <div className="absolute top-0 right-0 -translate-y-1/4 translate-x-1/4 w-[800px] h-[800px] bg-[#006699]/5 rounded-full blur-[120px] z-0"></div>
         
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col lg:flex-row items-center gap-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col lg:flex-row items-center justify-between gap-16">
           
-          {/* Sol: İsim ve Kısa Bio */}
-          <div className="w-full lg:w-3/5 order-2 lg:order-1">
+          <div className="w-full lg:w-[55%] order-2 lg:order-1">
             <div className="flex items-center gap-4 mb-6">
               <span className="w-12 h-px bg-[#e6c15c]"></span>
               <span className="text-[#006699] font-bold tracking-widest uppercase text-sm">Hakkımda</span>
@@ -64,10 +86,9 @@ export default function Hakkimda() {
               {pageData.title}
             </h1>
             
-            {/* Kısa Bio (Artık Editörden Geliyor - Kalın Yazıları Destekler ve Taşmayı Engeller) */}
             <div 
-              className="text-lg md:text-xl text-gray-600 font-light leading-relaxed mb-10 prose prose-lg prose-p:text-gray-600 prose-strong:text-[#031321] max-w-none force-wrap"
-              dangerouslySetInnerHTML={{ __html: pageData.short_bio }}
+              className="text-lg md:text-xl text-gray-600 font-light leading-relaxed mb-10 prose prose-lg prose-p:text-gray-600 prose-strong:text-[#031321] max-w-none clean-text"
+              dangerouslySetInnerHTML={{ __html: cleanHtml(pageData.short_bio) }}
             />
             
             <button 
@@ -79,13 +100,22 @@ export default function Hakkimda() {
             </button>
           </div>
 
-          {/* Sağ: Şık Çerçeveli Fotoğraf */}
+          {/* DÜZENLENEN ALAN: Fotoğraf Çerçevesi */}
           {pageData.image_url && (
-            <div className="w-full lg:w-2/5 order-1 lg:order-2">
-              <div className="relative">
+            <div className="w-full lg:w-[40%] order-1 lg:order-2 flex justify-center lg:justify-end">
+              {/* max-w-[380px] ile aşırı büyümesi/bulanıklaşması engellendi */}
+              <div className="relative w-full max-w-[320px] lg:max-w-[380px]">
+                {/* Altın Sarısı Kayık Çerçeve */}
                 <div className="absolute -inset-4 border-2 border-[#e6c15c] rounded-2xl transform translate-x-4 translate-y-4 -z-10"></div>
-                <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[4/5] bg-white">
-                  <img src={pageData.image_url} alt={pageData.title} className="w-full h-full object-cover" />
+                
+                {/* aspect-[3/4] tam olarak 232x300 (Dikey Portre) oranını verir */}
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[3/4] bg-white">
+                  <img 
+                    src={pageData.image_url} 
+                    alt={pageData.title} 
+                    /* object-top eklendi, böylece yüz her zaman merkezde/üstte kalır */
+                    className="w-full h-full object-cover object-top" 
+                  />
                 </div>
               </div>
             </div>
@@ -98,8 +128,8 @@ export default function Hakkimda() {
       ========================================= */}
       <section id="detayli-ozgecmis" className="py-24 bg-white border-t border-gray-100">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 w-full overflow-hidden">
-          <div className="force-wrap prose prose-lg max-w-none w-full prose-headings:text-[#031321] prose-headings:font-bold prose-p:text-gray-600 prose-p:font-light prose-p:leading-loose prose-a:text-[#006699] prose-strong:text-[#031321]" 
-               dangerouslySetInnerHTML={{ __html: pageData.content }} />
+          <div className="clean-text prose prose-lg max-w-none w-full prose-headings:text-[#031321] prose-headings:font-bold prose-p:text-gray-600 prose-p:font-light prose-p:leading-loose prose-a:text-[#006699] prose-strong:text-[#031321]" 
+               dangerouslySetInnerHTML={{ __html: cleanHtml(pageData.content) }} />
         </div>
       </section>
 
@@ -110,7 +140,6 @@ export default function Hakkimda() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row gap-20">
             
-            {/* Sol: Eğitim Geçmişim */}
             <div className="w-full lg:w-1/3">
               <div className="flex items-center gap-3 mb-12">
                 <GraduationCap className="text-[#006699] w-8 h-8" />
@@ -129,14 +158,30 @@ export default function Hakkimda() {
               </div>
             </div>
 
-            {/* Sağ: Sertifikalar */}
             <div className="w-full lg:w-2/3">
-              <div className="flex items-center gap-3 mb-12">
-                <Award className="text-[#006699] w-8 h-8" />
-                <h2 className="text-3xl font-extrabold text-[#031321]">Sertifikalar ve Başarılar</h2>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-12 gap-4">
+                <div className="flex items-center gap-3">
+                  <Award className="text-[#006699] w-8 h-8" />
+                  <h2 className="text-3xl font-extrabold text-[#031321]">Sertifikalar ve Başarılar</h2>
+                </div>
+                
+                <div className="flex gap-2">
+                  <button 
+                    onClick={scrollPrev}
+                    className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-[#006699] hover:text-white hover:border-[#006699] transition-all"
+                  >
+                    <ChevronLeft size={20} strokeWidth={1.5} />
+                  </button>
+                  <button 
+                    onClick={scrollNext}
+                    className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-[#006699] hover:text-white hover:border-[#006699] transition-all"
+                  >
+                    <ChevronRight size={20} strokeWidth={1.5} />
+                  </button>
+                </div>
               </div>
               
-              <div className="overflow-hidden" ref={emblaRef}>
+              <div className="overflow-hidden cursor-grab active:cursor-grabbing" ref={emblaRef}>
                 <div className="flex -ml-6 py-4">
                   {pageData.certificates?.map((cert: any, idx: number) => (
                     <div key={idx} className="min-w-0 flex-[0_0_80%] sm:flex-[0_0_45%] md:flex-[0_0_35%] pl-6">
@@ -166,8 +211,8 @@ export default function Hakkimda() {
         <section className="py-24 bg-white border-t border-gray-100">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 w-full overflow-hidden">
             <h2 className="text-3xl font-extrabold text-center text-[#031321] mb-16">Ek Eğitim ve Seminerler</h2>
-            <div className="force-wrap prose prose-lg max-w-none w-full prose-headings:text-[#031321] prose-headings:font-bold prose-p:text-gray-600 prose-ul:text-gray-600 prose-li:marker:text-[#006699] prose-a:text-[#006699]" 
-                 dangerouslySetInnerHTML={{ __html: pageData.detailed_info }} />
+            <div className="clean-text prose prose-lg max-w-none w-full prose-headings:text-[#031321] prose-headings:font-bold prose-p:text-gray-600 prose-ul:text-gray-600 prose-li:marker:text-[#006699] prose-a:text-[#006699]" 
+                 dangerouslySetInnerHTML={{ __html: cleanHtml(pageData.detailed_info) }} />
           </div>
         </section>
       )}

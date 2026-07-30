@@ -3,238 +3,177 @@
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { supabase } from "../../../lib/supabase";
-import { PlusCircle, Trash2, Image as ImageIcon, Save } from "lucide-react";
-import "react-quill-new/dist/quill.snow.css"; // Editörün tasarımı
+import { Save, Trash2, PlusCircle, Image as ImageIcon, X } from "lucide-react";
+import "react-quill-new/dist/quill.snow.css";
 
-// Next.js'te Quill editörünü Server Side Rendering (SSR) hatası vermemesi için dinamik yüklüyoruz
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
-export default function HizmetYonetimi() {
+export default function HizmetlerAdmin() {
   const [services, setServices] = useState<any[]>([]);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
 
-  // Form State
+  const [currentId, setCurrentId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
   const [shortDesc, setShortDesc] = useState("");
   const [content, setContent] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const [metaTitle, setMetaTitle] = useState("");
-  const [metaDesc, setMetaDesc] = useState("");
+  const [sortOrder, setSortOrder] = useState<number>(0); // YENİ: Sıralama durumu
 
   useEffect(() => {
     fetchServices();
   }, []);
 
   const fetchServices = async () => {
-    const { data } = await supabase.from("services").select("*").order("created_at", { ascending: false });
+    // YENİ: Artık tarihe göre değil, sıra numarasına göre (küçükten büyüğe) çekiyoruz
+    const { data } = await supabase.from("services").select("*").order("sort_order", { ascending: true });
     if (data) setServices(data);
   };
 
-  const generateSlug = (text: string) => {
-    return text.toString().toLowerCase()
-      .replace(/\s+/g, '-').replace(/[^\w\-]+/g, '')
-      .replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
-  };
-
-  // RESİM YÜKLEME İŞLEMİ (Supabase Storage)
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setUploadingImage(true);
-      if (!e.target.files || e.target.files.length === 0) {
-        throw new Error("Lütfen bir resim seçin.");
-      }
-
+      if (!e.target.files || e.target.files.length === 0) return;
+      
       const file = e.target.files[0];
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `${fileName}`;
+      const safeName = file.name.replace(/[^a-zA-Z0-9]/g, '').substring(0, 10);
+      const fileName = `hizmet-${Date.now()}-${safeName}.${fileExt}`;
 
-      // 'service-images' bucket'ına yükle
-      const { error: uploadError, data } = await supabase.storage
-        .from('service-images')
-        .upload(filePath, file);
-
+      const { error: uploadError } = await supabase.storage.from('service-images').upload(fileName, file, { cacheControl: '3600', upsert: false });
       if (uploadError) throw uploadError;
 
-      // Yüklenen resmin Public URL'ini al
-      const { data: { publicUrl } } = supabase.storage
-        .from('service-images')
-        .getPublicUrl(filePath);
-
-      setImageUrl(publicUrl);
-    } catch (error: any) {
-      alert(error.message);
+      const { data: urlData } = supabase.storage.from('service-images').getPublicUrl(fileName);
+      setImageUrl(urlData.publicUrl);
+    } catch (err: any) {
+      alert("Resim yüklenemedi: " + err.message);
     } finally {
       setUploadingImage(false);
+      e.target.value = ''; 
     }
   };
 
-  const handleAddService = async (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
-    const slug = generateSlug(title);
-
-    const { error } = await supabase.from("services").insert([
-      {
-        title,
-        slug,
-        short_description: shortDesc,
-        content,
-        image_url: imageUrl,
-        meta_title: metaTitle,
-        meta_description: metaDesc,
-        is_active: true
-      }
-    ]);
-
-    if (!error) {
-      // Formu Temizle
-      setTitle(""); setShortDesc(""); setContent(""); 
-      setImageUrl(""); setMetaTitle(""); setMetaDesc("");
-      fetchServices(); 
+    
+    // YENİ: sort_order veritabanına gönderiliyor
+    const serviceData = { title, slug, short_description: shortDesc, content, image_url: imageUrl, sort_order: sortOrder };
+    
+    if (currentId) {
+      await supabase.from("services").update(serviceData).eq("id", currentId);
     } else {
-      alert("Eklenirken hata oluştu: " + error.message);
+      await supabase.from("services").insert([serviceData]);
     }
+    
+    alert("İşlem başarılı!");
+    resetForm();
+    fetchServices();
     setIsLoading(false);
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm("Bu hizmeti silmek istediğinize emin misiniz?")) {
+    if (confirm("Silmek istediğinize emin misiniz?")) {
       await supabase.from("services").delete().eq("id", id);
       fetchServices();
     }
   };
 
-  // Editör modülleri (Hangi butonlar görünsün)
-  const quillModules = {
-    toolbar: [
-      [{ 'header': [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      [{ 'color': [] }, { 'background': [] }],
-      ['link'],
-      ['clean']
-    ],
+  const editService = (srv: any) => {
+    setCurrentId(srv.id); setTitle(srv.title || ""); setSlug(srv.slug || ""); 
+    setShortDesc(srv.short_description || ""); setContent(srv.content || ""); 
+    setImageUrl(srv.image_url || ""); setSortOrder(srv.sort_order || 0);
+    setIsFormOpen(true);
+  };
+
+  const resetForm = () => {
+    setCurrentId(null); setTitle(""); setSlug(""); setShortDesc(""); setContent(""); setImageUrl(""); setSortOrder(0); setIsFormOpen(false);
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto min-h-screen">
-      <div className="mb-8">
-        <h1 className="text-3xl font-extrabold text-gray-900">Gelişmiş Hizmet Yönetimi</h1>
-        <p className="text-gray-500 mt-2">Hizmet içeriklerinizi, görsellerini ve SEO ayarlarını buradan yönetin.</p>
+    <div className="max-w-6xl mx-auto pb-32">
+      <div className="flex justify-between items-center mb-10">
+        <div>
+          <h1 className="text-3xl font-extrabold text-gray-900">Hizmetler Yönetimi</h1>
+        </div>
+        {!isFormOpen && (
+          <button onClick={() => setIsFormOpen(true)} className="bg-[#006699] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-[#004d73]">
+            <PlusCircle size={20}/> Yeni Hizmet Ekle
+          </button>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        
-        {/* SOL TARAF: FORM (2 Kolon Genişliğinde) */}
-        <div className="xl:col-span-2">
-          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-            <form onSubmit={handleAddService} className="space-y-6">
-              
-              {/* Üst Kısım: Başlık ve Resim */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Hizmet Başlığı *</label>
-                  <input required type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-mediterranean outline-none" />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Kapak Resmi</label>
-                  <div className="flex items-center gap-4">
-                    <label className="cursor-pointer flex items-center justify-center bg-gray-50 border border-dashed border-gray-300 rounded-xl px-4 py-3 hover:bg-gray-100 transition-all flex-grow">
-                      <ImageIcon className="w-5 h-5 mr-2 text-gray-500" />
-                      <span className="text-sm font-medium text-gray-600">
-                        {uploadingImage ? 'Yükleniyor...' : 'Görsel Seç ve Yükle'}
-                      </span>
-                      <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={uploadingImage} />
-                    </label>
-                    {imageUrl && (
-                      <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0">
-                        <img src={imageUrl} alt="Önizleme" className="w-full h-full object-cover" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Kısa Açıklama */}
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Kısa Açıklama (Özet) *</label>
-                <textarea required rows={2} value={shortDesc} onChange={(e) => setShortDesc(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-mediterranean outline-none resize-none" placeholder="Ana sayfa kartlarında görünecek yazı..." />
-              </div>
-
-              {/* Detaylı İçerik (React Quill) */}
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Detaylı İçerik *</label>
-                <div className="bg-white rounded-xl overflow-hidden border border-gray-200">
-                  <ReactQuill 
-                    theme="snow" 
-                    value={content} 
-                    onChange={setContent} 
-                    modules={quillModules}
-                    className="h-64 mb-12" // Toolbar ve alan yüksekliği ayarı
-                  />
-                </div>
-              </div>
-
-              <hr className="border-gray-100" />
-
-              {/* SEO Alanı */}
-              <div className="bg-sand-light/50 p-6 rounded-xl border border-sand-dark/20">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">SEO Ayarları</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Meta Title (SEO Başlığı)</label>
-                    <input type="text" value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-mediterranean outline-none" placeholder="Örn: Antalya Aile Terapisi | Meryem Gül Eren" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Meta Description (SEO Açıklaması)</label>
-                    <textarea rows={2} value={metaDesc} onChange={(e) => setMetaDesc(e.target.value)} className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-mediterranean outline-none resize-none" placeholder="Google arama sonuçlarında görünecek açıklama metni..." />
-                  </div>
-                </div>
-              </div>
-
-              <button type="submit" disabled={isLoading} className="w-full bg-mediterranean text-white py-4 rounded-xl font-bold hover:bg-mediterranean-dark transition-all flex items-center justify-center gap-2 text-lg shadow-lg">
-                <Save size={20} /> {isLoading ? "Kaydediliyor..." : "Hizmeti Yayınla"}
-              </button>
-
-            </form>
+      {isFormOpen ? (
+        <form onSubmit={handleSave} className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+          <div className="flex justify-between items-center mb-8 border-b pb-4">
+            <h2 className="text-xl font-bold text-[#031321]">{currentId ? "Hizmeti Düzenle" : "Yeni Hizmet"}</h2>
+            <button type="button" onClick={resetForm} className="text-gray-400 hover:text-red-500 bg-gray-50 p-2 rounded-full"><X size={24} /></button>
           </div>
-        </div>
 
-        {/* SAĞ TARAF: LİSTE (1 Kolon Genişliğinde) */}
-        <div className="xl:col-span-1 space-y-4">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Yayındaki Hizmetler</h2>
-          <div className="max-h-[800px] overflow-y-auto pr-2 space-y-4">
-            {services.length === 0 ? (
-              <div className="bg-gray-50 p-6 rounded-2xl text-center text-gray-500 border border-dashed border-gray-300">
-                Hiç hizmet bulunamadı.
-              </div>
-            ) : (
-              services.map((service) => (
-                <div key={service.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-3 group hover:border-mediterranean/40 transition-colors">
-                  {service.image_url && (
-                    <img src={service.image_url} alt={service.title} className="w-full h-32 object-cover rounded-xl" />
-                  )}
-                  <div>
-                    <h3 className="font-bold text-gray-900">{service.title}</h3>
-                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">{service.short_description}</p>
-                  </div>
-                  <div className="flex justify-between items-center mt-2 pt-3 border-t border-gray-50">
-                    <span className="text-xs font-mono bg-gray-100 text-gray-600 px-2 py-1 rounded">/{service.slug}</span>
-                    <button onClick={() => handleDelete(service.id)} className="text-red-400 hover:text-red-600 transition-colors">
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div>
+              <label className="block font-bold mb-2">Hizmet Adı</label>
+              <input required type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full border px-4 py-3 rounded-xl outline-none" />
+            </div>
+            <div>
+              <label className="block font-bold mb-2">URL (Slug)</label>
+              <input required type="text" value={slug} onChange={(e) => setSlug(e.target.value)} className="w-full border px-4 py-3 rounded-xl outline-none" />
+            </div>
+            {/* YENİ: Sıralama Numarası Input'u */}
+            <div>
+              <label className="block font-bold mb-2 text-[#006699]">Sıra Numarası (1, 2, 3...)</label>
+              <input type="number" value={sortOrder} onChange={(e) => setSortOrder(Number(e.target.value))} className="w-full border-2 border-[#006699]/30 px-4 py-3 rounded-xl outline-none focus:border-[#006699]" />
+            </div>
           </div>
-        </div>
+          
+          <div className="mb-6">
+            <label className="block font-bold mb-2">Kapak Resmi</label>
+            <div className="flex gap-4 items-center">
+              <label className="cursor-pointer bg-gray-50 border border-dashed p-4 rounded-xl">
+                <ImageIcon className="inline mr-2 text-gray-400"/> {uploadingImage ? "Yükleniyor..." : "Resim Seç"}
+                <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+              </label>
+              {imageUrl && <img src={imageUrl} className="h-16 rounded-xl border" />}
+            </div>
+          </div>
 
-      </div>
+          <div className="mb-6">
+            <label className="block font-bold mb-2">Kısa Açıklama</label>
+            <textarea required rows={2} value={shortDesc} onChange={(e) => setShortDesc(e.target.value)} className="w-full border px-4 py-3 rounded-xl outline-none resize-none" />
+          </div>
+
+          <div className="mb-8 h-[300px]">
+            <label className="block font-bold mb-2">Detaylı İçerik</label>
+            <ReactQuill theme="snow" value={content} onChange={setContent} className="h-56" />
+          </div>
+
+          <button type="submit" disabled={isLoading} className="bg-[#031321] text-white px-8 py-4 rounded-xl font-bold mt-4 w-full md:w-auto">
+            {isLoading ? "Kaydediliyor..." : "Kaydet"}
+          </button>
+        </form>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {services.map(srv => (
+            <div key={srv.id} className="bg-white rounded-2xl border p-6 flex flex-col justify-between shadow-sm relative">
+              {/* YENİ: Sağ üst köşede sıra numarasını gösteren ufak rozet */}
+              <div className="absolute top-4 right-4 bg-[#e6c15c] text-[#031321] font-extrabold w-8 h-8 flex items-center justify-center rounded-full text-sm shadow-md z-10">
+                {srv.sort_order}
+              </div>
+              <div>
+                {srv.image_url && <img src={srv.image_url} className="w-full h-32 object-cover rounded-xl mb-4" />}
+                <h3 className="font-bold text-xl mb-2">{srv.title}</h3>
+                <p className="text-gray-500 text-sm line-clamp-2">{srv.short_description}</p>
+              </div>
+              <div className="flex justify-end gap-3 mt-4 pt-4 border-t">
+                <button onClick={() => editService(srv)} className="text-[#006699] font-bold">Düzenle</button>
+                <button onClick={() => handleDelete(srv.id)} className="text-red-500"><Trash2 size={18}/></button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
