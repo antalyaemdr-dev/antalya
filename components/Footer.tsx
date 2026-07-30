@@ -1,54 +1,84 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { supabase } from "../lib/supabase";
 
 export default function Footer() {
+  const [services, setServices] = useState<any[]>([]);
+
+  // Hizmetleri menü için veritabanından çekiyoruz (İlk 5 hizmet)
+  useEffect(() => {
+    const fetchServices = async () => {
+      const { data } = await supabase
+        .from("services")
+        .select("title, slug")
+        .order("sort_order", { ascending: true })
+        .limit(5);
+      if (data) setServices(data);
+    };
+    fetchServices();
+  }, []);
+
   return (
-    <footer className="bg-mediterranean-dark text-sand-light pt-16 pb-8 mt-20">
-      <div className="container mx-auto px-4 md:px-8 grid grid-cols-1 md:grid-cols-4 gap-12">
+    <footer className="bg-[#031321] text-gray-300 pt-20 pb-10 mt-20 border-t border-gray-800">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-12">
         
-        {/* Marka ve Kısa Bilgi */}
+        {/* Marka ve Hakkında (Logo Altı) */}
         <div className="col-span-1 md:col-span-2">
-          <Link href="/" className="inline-block mb-6 bg-sand-light/10 p-3 rounded-xl backdrop-blur-sm">
-            <Image 
+          <Link href="/" className="inline-block mb-6 bg-white/5 p-4 rounded-2xl backdrop-blur-sm border border-white/10">
+            <img 
               src="/images/logo/logo.webp" 
               alt="Antalya EMDR Logo" 
-              width={200} 
-              height={60} 
-              className="h-12 w-auto object-contain brightness-0 invert" 
-              // Not: CSS ile logoyu beyaz yapmaya çalıştık (brightness-0 invert). 
-              // Eğer bu efekt logonun yapısını bozarsa class'tan bu iki kelimeyi silebilirsin.
+              className="h-14 w-auto object-contain brightness-0 invert opacity-90 hover:opacity-100 transition-opacity" 
             />
           </Link>
-          <p className="text-sand/90 max-w-sm leading-relaxed text-sm">
-            Meryem Gül Eren yönetiminde; bireysel danışmanlık, çift ve aile danışmanlığı ile profesyonel EMDR terapi hizmetleri.
-          </p>
+          <div className="text-gray-400 text-sm leading-relaxed space-y-4 max-w-lg">
+            <p className="font-extrabold text-white text-base">
+              Psikolog / Avrupa Akredite EMDR Terapisti, Çift Aile Danışmanı
+            </p>
+            <p>
+              23 yıllık deneyim sürecinde İstanbul’da Özel Eğitim, Rehabilitasyon, psikiyatri ve psikoterapi merkezlerinden sonra; Elika Psikoloji ve Danışmanlık merkezinde hem kurucu hem de Çift -Aile ve EMDR Terapisti olarak hizmet vermiştir. Şehir değişikliği nedeniyle İstanbul’daki ofis çalışmalarına, online olarak devam etmektedir.
+            </p>
+          </div>
         </div>
         
-        {/* Hızlı Linkler */}
+        {/* Hizmetlerimiz Menüsü */}
         <div>
-          <h3 className="font-bold text-white mb-6 tracking-wide text-lg">Hızlı Linkler</h3>
-          <ul className="space-y-3 flex flex-col">
-            <Link href="/hakkimda" className="text-sm text-sand/80 hover:text-sand transition-colors">Hakkımda</Link>
-            <Link href="/hizmetlerimiz" className="text-sm text-sand/80 hover:text-sand transition-colors">Hizmetlerimiz</Link>
-            <Link href="/blog" className="text-sm text-sand/80 hover:text-sand transition-colors">Blog</Link>
-            <Link href="/iletisim" className="text-sm text-sand/80 hover:text-sand transition-colors">İletişim</Link>
+          <h3 className="font-extrabold text-white mb-6 tracking-wide text-lg">Hizmetlerimiz</h3>
+          <ul className="space-y-4 flex flex-col">
+            {services.map(srv => (
+              <Link key={srv.slug} href={`/hizmetlerimiz/${srv.slug}`} className="text-sm text-gray-400 hover:text-white transition-colors">
+                {srv.title}
+              </Link>
+            ))}
+            <Link href="/hizmetlerimiz" className="text-sm font-bold text-[#006699] hover:text-blue-400 transition-colors mt-2 inline-flex items-center">
+              Tüm Hizmetler &rarr;
+            </Link>
           </ul>
         </div>
 
-        {/* Yasal Linkler */}
+        {/* Kurumsal Menüsü */}
         <div>
-          <h3 className="font-bold text-white mb-6 tracking-wide text-lg">Yasal</h3>
-          <ul className="space-y-3 flex flex-col">
-            <Link href="/kvkk" className="text-sm text-sand/80 hover:text-sand transition-colors">KVKK Aydınlatma Metni</Link>
-            <Link href="/cerez-politikasi" className="text-sm text-sand/80 hover:text-sand transition-colors">Çerez Politikası</Link>
+          <h3 className="font-extrabold text-white mb-6 tracking-wide text-lg">Kurumsal</h3>
+          <ul className="space-y-4 flex flex-col">
+            <Link href="/hakkimda" className="text-sm text-gray-400 hover:text-white transition-colors">Hakkımızda</Link>
+            <Link href="/blog" className="text-sm text-gray-400 hover:text-white transition-colors">Blog</Link>
+            <Link href="/oneriler" className="text-sm text-gray-400 hover:text-white transition-colors">Öneriler</Link>
+            <Link href="/iletisim" className="text-sm text-gray-400 hover:text-white transition-colors">İletişim</Link>
+            <Link href="/kvkk" className="text-sm text-gray-400 hover:text-white transition-colors">KVKK Aydınlatma Metni</Link>
           </ul>
         </div>
       </div>
       
-      {/* Alt Çizgi ve Telif */}
-      <div className="container mx-auto px-4 md:px-8 mt-16 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center text-sm text-sand/60">
-        <p>&copy; {new Date().getFullYear()} Antalya EMDR. Tüm hakları saklıdır.</p>
-        <p className="mt-2 md:mt-0">Ela Teknoloji ve Tasarım tarafından sevgiyle hazırlandı.</p>
+      {/* Alt Çizgi ve Telif Kısımları */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 pt-8 border-t border-white/10 flex flex-col lg:flex-row justify-between items-center text-sm text-gray-500 gap-4 text-center lg:text-left">
+        <p>
+          Copyright © 2026, AntalyaEmdr.com.tr web sitesi bir Elika Psikoloji ( <a href="https://www.elikapsikoloji.com" target="_blank" rel="noopener noreferrer" className="text-white hover:text-[#006699] transition-colors">www.elikapsikoloji.com</a> ) markasıdır
+        </p>
+        <p>
+          Web Tasarım ve Yazılım <a href="https://www.eladesign.org" target="_blank" rel="noopener noreferrer" className="text-white font-bold hover:text-[#006699] transition-colors">Ela Teknoloji</a>
+        </p>
       </div>
     </footer>
   );
