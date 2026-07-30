@@ -24,18 +24,30 @@ export default function HizmetDetay() {
     fetchService();
   }, [slug]);
 
+  // Kopyala-Yapıştır kalıntılarını (yapışık boşlukları) temizleyen fonksiyon
+  const getCleanContent = (html: string) => {
+    if (!html) return "";
+    return html.replace(/&nbsp;/g, " "); 
+  };
+
   if (isLoading) return <div className="min-h-screen flex items-center justify-center text-[#006699]">Yükleniyor...</div>;
   if (!service) return <div className="min-h-screen flex items-center justify-center text-red-500 text-2xl font-bold">Hizmet Bulunamadı</div>;
 
   return (
     <div className="min-h-screen bg-white pt-32 pb-24">
       
-      {/* Gizli stil bozulmalarını engelleyen ZARAFETLİ CSS */}
+      {/* 
+        GİZLİ KOPYALA-YAPIŞTIR STİLLERİNİ EZEN KESİN ZIRH 
+        Bu CSS, editörden gelen gereksiz arka plan renklerini ve hatalı kelime bölmelerini zorla kapatır.
+      */}
       <style dangerouslySetInnerHTML={{__html: `
         .clean-text * {
+          background-color: transparent !important;
+          background: transparent !important;
           white-space: normal !important;
           word-break: normal !important;
           overflow-wrap: break-word !important;
+          letter-spacing: normal !important;
         }
       `}} />
 
@@ -61,10 +73,13 @@ export default function HizmetDetay() {
           </div>
         )}
 
-        {/* Zengin Metin İçerik Alanı (Agresif temizleyici kaldırıldı) */}
+        {/* 
+          Zengin Metin İçerik Alanı 
+          clean-text class'ı yukarıdaki style zırhını bu alana uygular.
+        */}
         <div 
           className="clean-text prose prose-lg max-w-none w-full prose-headings:text-[#031321] prose-headings:font-bold prose-p:text-gray-600 prose-p:leading-loose prose-a:text-[#006699] prose-strong:text-[#031321] prose-img:rounded-xl"
-          dangerouslySetInnerHTML={{ __html: service.content || '' }} 
+          dangerouslySetInnerHTML={{ __html: getCleanContent(service.content) }} 
         />
 
         {/* Randevu Butonu */}
