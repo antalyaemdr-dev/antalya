@@ -20,19 +20,42 @@ export default function BlogDetay() {
     fetchBlog();
   }, [slug]);
 
-  if (!blog) return <div className="min-h-screen flex items-center justify-center">Yükleniyor...</div>;
+  // Kopyala-Yapıştır kalıntılarını (yapışık boşlukları) temizleyen fonksiyon
+  const getCleanContent = (html: string) => {
+    if (!html) return "";
+    return html.replace(/&nbsp;/g, " "); 
+  };
+
+  if (!blog) return <div className="min-h-screen flex items-center justify-center text-[#006699] font-bold">Yükleniyor...</div>;
 
   return (
     <div className="min-h-screen bg-white pt-32 pb-24">
-      <style dangerouslySetInnerHTML={{__html: `.clean-text * { white-space: normal !important; word-break: normal !important; overflow-wrap: break-word !important; }`}} />
+      
+      {/* 
+        GİZLİ KOPYALA-YAPIŞTIR STİLLERİNİ EZEN KESİN ZIRH 
+        Editörden gelen arka plan renklerini ve hatalı kelime bölmelerini temizler.
+      */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .clean-text * {
+          background-color: transparent !important;
+          background: transparent !important;
+          white-space: normal !important;
+          word-break: normal !important;
+          overflow-wrap: break-word !important;
+          letter-spacing: normal !important;
+        }
+      `}} />
+
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         
+        {/* Navigasyon İzi (Breadcrumb) */}
         <div className="flex items-center gap-2 text-sm text-gray-500 font-medium mb-8">
           <Link href="/" className="hover:text-[#006699]">Ana Sayfa</Link><ChevronRight size={14} />
           <Link href="/blog" className="hover:text-[#006699]">Blog</Link><ChevronRight size={14} />
           <span className="text-[#006699]">{blog.title}</span>
         </div>
 
+        {/* Blog Başlığı ve Detayları */}
         <div className="mb-8">
           <span className="bg-[#e6c15c]/20 text-[#031321] font-bold px-3 py-1 rounded-full text-sm">{blog.category}</span>
           <h1 className="text-3xl md:text-5xl font-extrabold text-[#031321] mt-4 mb-4">{blog.title}</h1>
@@ -42,9 +65,20 @@ export default function BlogDetay() {
           </div>
         </div>
 
-        {blog.image_url && <img src={blog.image_url} alt={blog.title} className="w-full aspect-video object-cover rounded-3xl mb-12 shadow-lg" />}
+        {/* Kapak Resmi */}
+        {blog.image_url && (
+          <img src={blog.image_url} alt={blog.title} className="w-full aspect-video object-cover rounded-3xl mb-12 shadow-lg" />
+        )}
 
-        <div className="clean-text prose prose-lg max-w-none w-full prose-headings:text-[#031321] prose-p:text-gray-600" dangerouslySetInnerHTML={{ __html: blog.content || '' }} />
+        {/* 
+          Zengin Metin İçerik Alanı 
+          clean-text class'ı ve getCleanContent fonksiyonu ile tertemiz bir çıktı sağlar.
+        */}
+        <div 
+          className="clean-text prose prose-lg max-w-none w-full prose-headings:text-[#031321] prose-headings:font-bold prose-p:text-gray-600 prose-p:leading-loose prose-a:text-[#006699] prose-strong:text-[#031321] prose-img:rounded-xl" 
+          dangerouslySetInnerHTML={{ __html: getCleanContent(blog.content) }} 
+        />
+        
       </div>
     </div>
   );
