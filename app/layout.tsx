@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
 import { Nunito } from "next/font/google";
 import "./globals.css";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
 
-// Nunito fontunu çağırıyoruz
 const nunito = Nunito({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"], // Kullanacağımız kalınlıklar
+  weight: ["300", "400", "500", "600", "700"],
   display: 'swap',
 });
 
@@ -23,15 +20,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr">
-      {/* nunito.className ile tüm siteye fontu giydiriyoruz */}
-      <body
-        className={`${nunito.className} min-h-screen flex flex-col antialiased`}
-      >
-        <Header />
-        <main className="flex-grow">
-          {children}
-        </main>
-        <Footer />
+      <body className={`${nunito.className} min-h-screen flex flex-col antialiased bg-sand-light`}>
+        {children}
       </body>
     </html>
   );

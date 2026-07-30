@@ -1,63 +1,88 @@
-import Link from "next/link";
-import Image from "next/image";
+"use client";
+
+import Link from 'next/link';
+import { ChevronRight, ChevronDown } from 'lucide-react';
 
 export default function Hero() {
+  
+  const handleScroll = () => {
+    // Header boyu (88px) kadar aşağı kaymasını sağlıyoruz
+    window.scrollTo({
+      top: window.innerHeight - 88,
+      behavior: 'smooth'
+    });
+  };
+
   return (
-    <section className="relative bg-white overflow-hidden">
-      <div className="container mx-auto px-4 md:px-8 py-16 md:py-24 flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
-        
-        {/* Metin ve Aksiyon Alanı */}
-        <div className="w-full lg:w-1/2 flex flex-col items-start text-left z-10">
-          <span className="inline-block py-1.5 px-4 rounded-full bg-sand-light text-mediterranean-dark text-xs font-bold tracking-widest mb-6 uppercase border border-sand">
-            Psikolojik Danışmanlık
-          </span>
-          
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-6">
-            Geçmişin Yüklerinden <span className="text-mediterranean">Özgürleşin</span>
-          </h1>
-          
-          <p className="text-lg md:text-xl text-gray-600 mb-10 max-w-lg leading-relaxed">
-            Meryem Gül Eren ile Antalya'da profesyonel EMDR terapisi, bireysel ve aile danışmanlığı hizmetleriyle daha dengeli ve huzurlu bir yaşama adım atın.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-            <Link href="/randevu" className="flex items-center justify-center px-8 py-4 text-base font-bold text-white bg-mediterranean rounded-xl hover:bg-mediterranean-dark transition-all shadow-lg hover:shadow-xl hover:-translate-y-1">
-              Hemen Randevu Al
-            </Link>
-            <Link href="/hizmetlerimiz" className="flex items-center justify-center px-8 py-4 text-base font-bold text-mediterranean bg-white border-2 border-sand-dark/30 rounded-xl hover:border-mediterranean hover:bg-sand-light/50 transition-all">
-              Hizmetleri İncele
-            </Link>
-          </div>
-        </div>
-
-        {/* Görsel Alanı */}
-        <div className="w-full lg:w-1/2 relative z-10">
-          <div className="relative rounded-3xl overflow-hidden shadow-2xl aspect-[4/3] md:aspect-[5/4] bg-sand-light border-4 border-white">
-            {/* Geçici bir placeholder koyuyoruz. Buraya gerçek fotoğraf gelecek. */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-mediterranean-light/60 p-6 text-center">
-              <svg className="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-              <span className="font-semibold text-lg">Meryem Hanım'ın Fotoğrafı veya<br/>Ferah Bir Klinik Görseli</span>
-            </div>
-            
-            {/* Gerçek resim eklemek için bu yorum satırını açıp kullanabilirsin:
-            <Image 
-              src="/images/hero-gorseli.webp" 
-              alt="Meryem Gül Eren EMDR Terapisi" 
-              fill
-              className="object-cover"
-              priority
-            /> */}
-          </div>
-          
-          {/* Dekoratif Şekiller (Tasarıma derinlik katar) */}
-          <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-sand rounded-full -z-10 opacity-60"></div>
-          <div className="absolute -top-8 -right-8 w-40 h-40 bg-mediterranean/10 rounded-full -z-10"></div>
-        </div>
-
-      </div>
+    // DİKKAT: h-[calc(100dvh-88px)] ile ekran boyundan menü boyunu çıkarıyoruz. Tam oturacak!
+    <section className="relative h-[calc(100dvh-88px)] w-full flex items-center justify-center overflow-hidden">
       
-      {/* Arka Plan Sağ Taraf Dekoratif Kum Rengi Alanı */}
-      <div className="absolute top-0 right-0 w-full lg:w-1/3 h-full bg-sand-light/50 rounded-l-[120px] -z-0 hidden lg:block"></div>
+      {/* 1. KATMAN: Arka Plan Videosu */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute top-0 left-0 w-full h-full object-cover z-0"
+      >
+        <source src="/videos/kapak-hero.mp4" type="video/mp4" />
+      </video>
+
+      {/* 2. KATMAN: Kurumsal Renkli Sinematik Karartma */}
+      {/* Saf siyah yerine logodaki deniz mavisinin çok koyu bir tonunu (Slate/Navy) kullanıyoruz */}
+      <div className="absolute top-0 left-0 w-full h-full bg-[#031321]/60 z-10"></div>
+      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-[#031321]/90 via-transparent to-[#031321]/90 z-10"></div>
+      
+      {/* 3. KATMAN: İçerik ve Tipografi */}
+      <div className="relative z-20 text-center px-4 max-w-5xl mx-auto -mt-10">
+        
+        {/* ALTIN SARISI - VURUCU SÖZ */}
+        <span className="block text-[#e6c15c] italic tracking-wide text-xl md:text-2xl lg:text-3xl font-medium mb-6 drop-shadow-xl">
+          "Sen Değiştiğinde, Her Şey Değişir."
+        </span>
+        
+        {/* İddialı, büyük ana başlık */}
+        <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white mb-6 leading-tight drop-shadow-2xl">
+          İçsel Yolculuğunuza <br className="hidden md:block" />
+          <span className="text-white/80 font-light">Profesyonel Rehberlik</span>
+        </h1>
+        
+        {/* Alt metin */}
+        <p className="text-lg md:text-xl text-white/80 mb-10 font-light max-w-2xl mx-auto leading-relaxed drop-shadow-lg">
+          Antalya'da EMDR terapisi ve yenilikçi psikolojik danışmanlık yaklaşımlarıyla hayatınızdaki düğümleri çözmek için buradayız.
+        </p>
+        
+        {/* Kurumsal Aksiyon Butonları (Logodaki Mavi ve Beyaz Uyumu) */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Link 
+            href="/randevu" 
+            className="w-full sm:w-auto px-8 py-4 bg-[#006699] text-white rounded-xl font-bold hover:bg-[#004d73] transition-all flex items-center justify-center shadow-lg shadow-[#006699]/40"
+          >
+            Hemen Randevu Al
+          </Link>
+          <Link 
+            href="/hizmetlerimiz" 
+            className="w-full sm:w-auto px-8 py-4 border border-white/30 text-white rounded-xl font-bold hover:bg-white/10 transition-all backdrop-blur-md flex items-center justify-center gap-2"
+          >
+            Hizmetlerimizi İnceleyin <ChevronRight size={18} />
+          </Link>
+        </div>
+      </div>
+
+      {/* 4. KATMAN: Şık Scroll Oku */}
+      {/* Ok artık ekranın en altında güvende */}
+      <div 
+        onClick={handleScroll}
+        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-2 opacity-70 hover:opacity-100 transition-opacity cursor-pointer group"
+      >
+        <span className="text-[#e6c15c] text-[10px] md:text-xs tracking-widest uppercase font-semibold transition-colors">
+          Aşağı Kaydır
+        </span>
+        <div className="animate-bounce mt-1">
+          <ChevronDown className="text-white group-hover:text-[#e6c15c] transition-colors" size={32} strokeWidth={1.5} />
+        </div>
+      </div>
+
     </section>
   );
 }
