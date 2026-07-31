@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Nunito } from "next/font/google";
 import "./globals.css";
+import CookieConsent from "@/components/CookieConsent";
 
 const nunito = Nunito({
   subsets: ["latin"],
@@ -22,6 +23,7 @@ export default function RootLayout({
     <html lang="tr">
       <body className={`${nunito.className} min-h-screen flex flex-col antialiased bg-sand-light`}>
         {children}
+        <CookieConsent /> {/* Çerez uyarısı artık body içinde ve görünür durumda */}
       </body>
     </html>
   );

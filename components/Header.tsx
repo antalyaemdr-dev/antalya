@@ -63,6 +63,7 @@ export default function Header() {
               </div>
             </div>
 
+            <Link href="/emdr-danismanlik" className={`text-[15px] font-bold transition-colors py-2 ${pathname === "/emdr-danismanlik" ? "text-[#006699]" : "text-gray-700 hover:text-[#006699]"}`}>EMDR Danışmanlık</Link>
             <Link href="/blog" className={`text-[15px] font-bold transition-colors py-2 ${pathname === "/blog" ? "text-[#006699]" : "text-gray-700 hover:text-[#006699]"}`}>Blog</Link>
             <Link href="/oneriler" className={`text-[15px] font-bold transition-colors py-2 ${pathname === "/oneriler" ? "text-[#006699]" : "text-gray-700 hover:text-[#006699]"}`}>Öneriler</Link>
             <Link href="/online-testler" className={`text-[15px] font-bold transition-colors py-2 ${pathname === "/online-testler" ? "text-[#006699]" : "text-gray-700 hover:text-[#006699]"}`}>Online Testler</Link>
@@ -110,6 +111,7 @@ export default function Header() {
             )}
           </div>
 
+          <Link href="/emdr-danismanlik" className="p-3 font-bold text-gray-700 hover:bg-gray-50 rounded-xl">EMDR Danışmanlık</Link>
           <Link href="/blog" className="p-3 font-bold text-gray-700 hover:bg-gray-50 rounded-xl">Blog</Link>
           <Link href="/oneriler" className="p-3 font-bold text-gray-700 hover:bg-gray-50 rounded-xl">Öneriler</Link>
           <Link href="/online-testler" className="p-3 font-bold text-gray-700 hover:bg-gray-50 rounded-xl">Online Testler</Link>

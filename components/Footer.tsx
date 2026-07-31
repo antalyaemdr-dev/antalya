@@ -59,16 +59,17 @@ export default function Footer() {
         </div>
 
         {/* Kurumsal Menüsü */}
-        <div>
-          <h3 className="font-extrabold text-white mb-6 tracking-wide text-lg">Kurumsal</h3>
-          <ul className="space-y-4 flex flex-col">
-            <Link href="/hakkimda" className="text-sm text-blue-100 hover:text-[#e6c15c] transition-colors">Hakkımızda</Link>
-            <Link href="/blog" className="text-sm text-blue-100 hover:text-[#e6c15c] transition-colors">Blog</Link>
-            <Link href="/oneriler" className="text-sm text-blue-100 hover:text-[#e6c15c] transition-colors">Öneriler</Link>
-            <Link href="/iletisim" className="text-sm text-blue-100 hover:text-[#e6c15c] transition-colors">İletişim</Link>
-            <Link href="/kvkk" className="text-sm text-blue-100 hover:text-[#e6c15c] transition-colors">KVKK Aydınlatma Metni</Link>
-          </ul>
-        </div>
+<div>
+  <h3 className="font-extrabold text-white mb-6 tracking-wide text-lg">Kurumsal</h3>
+  <ul className="space-y-4 flex flex-col">
+    <Link href="/hakkimda" className="text-sm text-blue-100 hover:text-[#e6c15c] transition-colors">Hakkımızda</Link>
+    <Link href="/emdr-danismanlik" className="text-sm text-blue-100 hover:text-[#e6c15c] transition-colors">EMDR Danışmanlık</Link>
+    <Link href="/blog" className="text-sm text-blue-100 hover:text-[#e6c15c] transition-colors">Blog</Link>
+    <Link href="/oneriler" className="text-sm text-blue-100 hover:text-[#e6c15c] transition-colors">Öneriler</Link>
+    <Link href="/yasal-uyarilar" className="text-sm text-blue-100 hover:text-[#e6c15c] transition-colors font-medium text-[#e6c15c]">Yasal Uyarılar ve Politikalar</Link>
+    <Link href="/iletisim" className="text-sm text-blue-100 hover:text-[#e6c15c] transition-colors">İletişim</Link>
+  </ul>
+</div>
       </div>
       
       {/* Alt Çizgi ve Telif Kısımları */}
