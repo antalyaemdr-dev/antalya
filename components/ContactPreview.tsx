@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "../lib/supabase"; // Yolunu projene göre kontrol et
+import { supabase } from "../lib/supabase"; 
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
 
 export default function ContactPreview() {
@@ -15,14 +15,14 @@ export default function ContactPreview() {
     fetchSettings();
   }, []);
 
-  // Veri gelene kadar boş veya yükleniyor durumu gösterebiliriz
   if (!settings) return null; 
 
   return (
     <section className="py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <div className="bg-[#031321] rounded-3xl overflow-hidden shadow-2xl flex flex-col lg:flex-row">
+        {/* Arka plan mavi yapıldı */}
+        <div className="bg-[#006699] rounded-3xl overflow-hidden shadow-2xl flex flex-col lg:flex-row">
           
           {/* Sol: İletişim Bilgileri */}
           <div className="w-full lg:w-1/2 p-12 lg:p-16 flex flex-col justify-center relative overflow-hidden">
@@ -37,11 +37,11 @@ export default function ContactPreview() {
 
             <div className="space-y-8 relative z-10">
               <div className="flex items-start group">
-                <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-[#e6c15c] group-hover:bg-[#e6c15c] group-hover:text-[#031321] transition-all flex-shrink-0">
+                <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-[#e6c15c] group-hover:bg-[#e6c15c] group-hover:text-[#006699] transition-all flex-shrink-0">
                   <Phone size={24} />
                 </div>
                 <div className="ml-6">
-                  <p className="text-white/50 text-sm mb-1">Telefon</p>
+                  <p className="text-blue-200 text-sm mb-1">Telefon</p>
                   <a href={`tel:${settings.phone.replace(/[^0-9+]/g, '')}`} className="text-white text-xl font-medium hover:text-[#e6c15c] transition-colors">
                     {settings.phone}
                   </a>
@@ -49,11 +49,11 @@ export default function ContactPreview() {
               </div>
 
               <div className="flex items-start group">
-                <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-[#e6c15c] group-hover:bg-[#e6c15c] group-hover:text-[#031321] transition-all flex-shrink-0">
+                <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-[#e6c15c] group-hover:bg-[#e6c15c] group-hover:text-[#006699] transition-all flex-shrink-0">
                   <Mail size={24} />
                 </div>
                 <div className="ml-6">
-                  <p className="text-white/50 text-sm mb-1">E-Posta</p>
+                  <p className="text-blue-200 text-sm mb-1">E-Posta</p>
                   <a href={`mailto:${settings.email}`} className="text-white text-lg font-medium hover:text-[#e6c15c] transition-colors">
                     {settings.email}
                   </a>
@@ -61,11 +61,11 @@ export default function ContactPreview() {
               </div>
 
               <div className="flex items-start group">
-                <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-[#e6c15c] group-hover:bg-[#e6c15c] group-hover:text-[#031321] transition-all flex-shrink-0">
+                <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-[#e6c15c] group-hover:bg-[#e6c15c] group-hover:text-[#006699] transition-all flex-shrink-0">
                   <MapPin size={24} />
                 </div>
                 <div className="ml-6">
-                  <p className="text-white/50 text-sm mb-1">Klinik Adresi</p>
+                  <p className="text-blue-200 text-sm mb-1">Klinik Adresi</p>
                   <p className="text-white text-lg font-medium whitespace-pre-line">
                     {settings.address}
                   </p>
