@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "../../../lib/supabase";
-import { Save, Video, Megaphone, User, PlusCircle, Trash2, Image as ImageIcon } from "lucide-react";
+import { Save, Video, Megaphone, User, PlusCircle, Trash2, Image as ImageIcon, Search } from "lucide-react";
 
 export default function AnasayfaYonetimi() {
   const [isLoading, setIsLoading] = useState(false);
@@ -18,7 +18,9 @@ export default function AnasayfaYonetimi() {
     about_subtitle: "",
     about_title: "",
     about_text: "",
-    about_quote: ""
+    about_quote: "",
+    meta_title: "",        // YENİ
+    meta_description: ""   // YENİ
   });
 
   const [slides, setSlides] = useState<any[]>([]);
@@ -73,6 +75,23 @@ export default function AnasayfaYonetimi() {
       
       <form onSubmit={handleUpdate} className="space-y-8">
         
+        {/* YENİ: SEO ALANI */}
+        <div className="bg-blue-50/50 p-8 rounded-2xl shadow-sm border border-blue-100">
+          <h2 className="text-xl font-bold text-[#006699] mb-6 border-b border-blue-200 pb-4 flex items-center gap-2">
+            <Search size={24} /> Ana Sayfa SEO Ayarları
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Meta Başlık (Title)</label>
+              <input type="text" value={data.meta_title || ""} onChange={(e) => setData({...data, meta_title: e.target.value})} className="w-full px-4 py-3 rounded-xl border outline-none focus:border-[#006699]" placeholder="Opsiyonel" />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Meta Açıklama (Description)</label>
+              <input type="text" value={data.meta_description || ""} onChange={(e) => setData({...data, meta_description: e.target.value})} className="w-full px-4 py-3 rounded-xl border outline-none focus:border-[#006699]" placeholder="Kısa özet..." />
+            </div>
+          </div>
+        </div>
+
         {/* 1. HERO SLAYT ALANI */}
         <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
           <h2 className="text-xl font-bold text-[#031321] mb-6 border-b pb-4 flex items-center gap-2">
@@ -156,7 +175,7 @@ export default function AnasayfaYonetimi() {
           </div>
         </div>
 
-        {/* 3. CTA (Önceki kodun aynısı - kısaltıldı) */}
+        {/* 3. CTA */}
         <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
           <h2 className="text-xl font-bold text-[#031321] mb-6 border-b pb-4 flex items-center gap-2">
             <Megaphone className="text-[#006699]" size={24} /> 3. Harekete Geçirici Mesaj (CTA)

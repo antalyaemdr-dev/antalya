@@ -100,20 +100,15 @@ export default function Hakkimda() {
             </button>
           </div>
 
-          {/* DÜZENLENEN ALAN: Fotoğraf Çerçevesi */}
           {pageData.image_url && (
             <div className="w-full lg:w-[40%] order-1 lg:order-2 flex justify-center lg:justify-end">
-              {/* max-w-[380px] ile aşırı büyümesi/bulanıklaşması engellendi */}
               <div className="relative w-full max-w-[320px] lg:max-w-[380px]">
-                {/* Altın Sarısı Kayık Çerçeve */}
                 <div className="absolute -inset-4 border-2 border-[#e6c15c] rounded-2xl transform translate-x-4 translate-y-4 -z-10"></div>
                 
-                {/* aspect-[3/4] tam olarak 232x300 (Dikey Portre) oranını verir */}
                 <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[3/4] bg-white">
                   <img 
                     src={pageData.image_url} 
                     alt={pageData.title} 
-                    /* object-top eklendi, böylece yüz her zaman merkezde/üstte kalır */
                     className="w-full h-full object-cover object-top" 
                   />
                 </div>

@@ -1,45 +1,64 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { supabase } from "../../../../lib/supabase";
+import { supabase } from "../../../../lib/supabase"; // Kendi yoluna göre ayarla
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+import { Metadata } from "next";
+import { notFound } from "next/navigation";
 
-export default function HizmetDetay() {
-  const params = useParams();
-  const slug = params?.slug as string;
-  const [service, setService] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+// Next.js 15+ uyumluluğu için params Promise olarak tanımlandı
+interface PageProps {
+  params: Promise<{ slug: string }>;
+}
 
-  useEffect(() => {
-    if (!slug) return;
-    
-    const fetchService = async () => {
-      const { data } = await supabase.from("services").select("*").eq("slug", slug).single();
-      if (data) setService(data);
-      setIsLoading(false);
-    };
-    
-    fetchService();
-  }, [slug]);
+// SEO BİLGİLERİNİ ÇEKME
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const resolvedParams = await params;
+  const slug = resolvedParams.slug;
 
-  // Kopyala-Yapıştır kalıntılarını (yapışık boşlukları) temizleyen fonksiyon
+  const { data: service } = await supabase
+    .from("services")
+    .select("title, meta_title, meta_description")
+    .eq("slug", slug)
+    .single();
+
+  const { data: settings } = await supabase
+    .from("site_settings")
+    .select("meta_title, meta_description")
+    .limit(1)
+    .single();
+
+  if (!service) return { title: 'Hizmet Bulunamadı' };
+
+  const finalTitle = service.meta_title || service.title || settings?.meta_title || "Antalya EMDR";
+  const finalDescription = service.meta_description || settings?.meta_description || "Antalya EMDR ve Psikolojik Danışmanlık Hizmetleri";
+
+  return {
+    title: finalTitle,
+    description: finalDescription,
+  };
+}
+
+// SAYFANIN KENDİSİ
+export default async function ServiceDetailPage({ params }: PageProps) {
+  const resolvedParams = await params;
+  const slug = resolvedParams.slug;
+
+  const { data: service } = await supabase
+    .from("services")
+    .select("*")
+    .eq("slug", slug)
+    .single();
+
+  if (!service) notFound();
+
   const getCleanContent = (html: string) => {
     if (!html) return "";
     return html.replace(/&nbsp;/g, " "); 
   };
 
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center text-[#006699]">Yükleniyor...</div>;
-  if (!service) return <div className="min-h-screen flex items-center justify-center text-red-500 text-2xl font-bold">Hizmet Bulunamadı</div>;
-
   return (
-    <div className="min-h-screen bg-white pt-32 pb-24">
+    <main className="min-h-screen bg-white py-24 md:py-32">
       
-      {/* 
-        GİZLİ KOPYALA-YAPIŞTIR STİLLERİNİ EZEN KESİN ZIRH 
-        Bu CSS, editörden gelen gereksiz arka plan renklerini ve hatalı kelime bölmelerini zorla kapatır.
-      */}
+      {/* GİZLİ KOPYALA-YAPIŞTIR STİLLERİNİ EZEN KESİN ZIRH */}
       <style dangerouslySetInnerHTML={{__html: `
         .clean-text * {
           background-color: transparent !important;
@@ -53,44 +72,42 @@ export default function HizmetDetay() {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Navigasyon İzi (Breadcrumb) */}
+        {/* Navigasyon İzi */}
         <div className="flex items-center gap-2 text-sm text-gray-500 font-medium mb-8">
-          <Link href="/" className="hover:text-[#006699]">Ana Sayfa</Link>
-          <ChevronRight size={14} />
-          <Link href="/hizmetlerimiz" className="hover:text-[#006699]">Hizmetlerimiz</Link>
-          <ChevronRight size={14} />
+          <Link href="/" className="hover:text-[#006699]">Ana Sayfa</Link><ChevronRight size={14} />
+          <Link href="/hizmetlerimiz" className="hover:text-[#006699]">Hizmetlerimiz</Link><ChevronRight size={14} />
           <span className="text-[#006699]">{service.title}</span>
         </div>
 
-        {/* Gerçek Kapak Resmi */}
+        <span className="text-xs uppercase tracking-[0.3em] text-[#006699] font-bold block mb-3">
+          Hizmet Detayı
+        </span>
+
+        <h1 className="text-3xl md:text-5xl font-serif font-light text-[#031321] tracking-tight mb-8 leading-tight">
+          {service.title}
+        </h1>
+
         {service.image_url && (
-          <div className="w-full aspect-[21/9] rounded-3xl overflow-hidden shadow-xl mb-12 relative">
+          <div className="relative w-full aspect-[16/9] mb-12 overflow-hidden rounded-3xl bg-gray-100 shadow-sm">
             <img src={service.image_url} alt={service.title} className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#031321]/60 to-transparent"></div>
-            <h1 className="absolute bottom-8 left-8 right-8 text-3xl md:text-5xl font-extrabold text-white drop-shadow-lg">
-              {service.title}
-            </h1>
           </div>
         )}
 
-        {/* 
-          Zengin Metin İçerik Alanı 
-          clean-text class'ı yukarıdaki style zırhını bu alana uygular.
-        */}
         <div 
-          className="clean-text prose prose-lg max-w-none w-full prose-headings:text-[#031321] prose-headings:font-bold prose-p:text-gray-600 prose-p:leading-loose prose-a:text-[#006699] prose-strong:text-[#031321] prose-img:rounded-xl"
-          dangerouslySetInnerHTML={{ __html: getCleanContent(service.content) }} 
+          className="clean-text prose prose-lg max-w-none text-gray-700 font-light leading-relaxed space-y-6 prose-headings:text-[#031321] prose-headings:font-bold prose-a:text-[#006699] prose-img:rounded-xl"
+          dangerouslySetInnerHTML={{ __html: getCleanContent(service.content) }}
         />
 
-        {/* Randevu Butonu */}
-        <div className="mt-16 pt-10 border-t border-gray-100 text-center">
-          <h3 className="text-2xl font-bold text-[#031321] mb-6">Bu Konuda Destek Almak İster misiniz?</h3>
-          <Link href="/randevu" className="inline-flex items-center justify-center px-10 py-4 bg-[#e6c15c] text-[#031321] font-extrabold rounded-xl hover:bg-[#031321] hover:text-white transition-all shadow-lg">
-            Hemen Randevu Oluşturun
+        <div className="mt-16 pt-8 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <Link href="/hizmetlerimiz" className="text-xs uppercase tracking-[0.2em] font-bold text-[#006699] hover:text-[#004d73] transition-colors">
+            &larr; Tüm Hizmetlerimiz
+          </Link>
+          <Link href="/iletisim" className="w-full sm:w-auto text-center bg-[#006699] hover:bg-[#004d73] text-white px-8 py-3.5 rounded-xl font-bold transition-colors shadow-lg">
+            Hemen Randevu Al
           </Link>
         </div>
 
       </div>
-    </div>
+    </main>
   );
 }

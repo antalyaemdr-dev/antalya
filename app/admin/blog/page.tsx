@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { supabase } from "../../../lib/supabase";
+import { supabase } from "../../../lib/supabase"; 
 import { Save, Trash2, PlusCircle, Image as ImageIcon, X } from "lucide-react";
 import "react-quill-new/dist/quill.snow.css";
 
@@ -17,16 +17,41 @@ export default function BlogAdmin() {
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
+  const [isSlugEdited, setIsSlugEdited] = useState(false); 
   const [status, setStatus] = useState("published");
   const [category, setCategory] = useState("");
   const [content, setContent] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  
+  // YENİ: Meta verileri için state'ler
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
 
   useEffect(() => { fetchBlogs(); }, []);
 
   const fetchBlogs = async () => {
     const { data } = await supabase.from("blogs").select("*").order("created_at", { ascending: false });
     if (data) setBlogs(data);
+  };
+
+  const generateSlug = (text: string) => {
+    return text.toString().toLowerCase().trim()
+      .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
+      .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+      .replace(/[^a-z0-9 -]/g, '') 
+      .replace(/\s+/g, '-') 
+      .replace(/-+/g, '-'); 
+  };
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTitle = e.target.value;
+    setTitle(newTitle);
+    if (!isSlugEdited) setSlug(generateSlug(newTitle));
+  };
+
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSlug(e.target.value);
+    setIsSlugEdited(true); 
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,7 +70,9 @@ export default function BlogAdmin() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    const blogData = { title, slug, status, category, content, image_url: imageUrl };
+    // YENİ: Kaydederken meta verilerini de gönderiyoruz
+    const blogData = { title, slug, status, category, content, image_url: imageUrl, meta_title: metaTitle, meta_description: metaDescription };
+    
     if (currentId) {
       await supabase.from("blogs").update(blogData).eq("id", currentId);
     } else {
@@ -60,10 +87,19 @@ export default function BlogAdmin() {
 
   const editBlog = (b: any) => {
     setCurrentId(b.id); setTitle(b.title); setSlug(b.slug); setStatus(b.status);
-    setCategory(b.category); setContent(b.content); setImageUrl(b.image_url); setIsFormOpen(true);
+    setCategory(b.category); setContent(b.content); setImageUrl(b.image_url); 
+    // YENİ: Düzenlerken meta verilerini de doldur
+    setMetaTitle(b.meta_title || ""); setMetaDescription(b.meta_description || "");
+    setIsSlugEdited(true); 
+    setIsFormOpen(true);
   };
 
-  const resetForm = () => { setCurrentId(null); setTitle(""); setSlug(""); setStatus("published"); setCategory(""); setContent(""); setImageUrl(""); setIsFormOpen(false); };
+  const resetForm = () => { 
+    setCurrentId(null); setTitle(""); setSlug(""); setStatus("published"); 
+    setCategory(""); setContent(""); setImageUrl(""); 
+    setMetaTitle(""); setMetaDescription(""); // YENİ: Form kapanırken sıfırla
+    setIsSlugEdited(false); setIsFormOpen(false); 
+  };
 
   return (
     <div className="max-w-6xl mx-auto pb-32">
@@ -80,13 +116,38 @@ export default function BlogAdmin() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <input required placeholder="Başlık" value={title} onChange={e=>setTitle(e.target.value)} className="border px-4 py-3 rounded-xl" />
-            <input required placeholder="URL (Slug)" value={slug} onChange={e=>setSlug(e.target.value)} className="border px-4 py-3 rounded-xl" />
-            <input required placeholder="Kategori (Örn: Psikoloji)" value={category} onChange={e=>setCategory(e.target.value)} className="border px-4 py-3 rounded-xl" />
-            <select value={status} onChange={e=>setStatus(e.target.value)} className="border px-4 py-3 rounded-xl">
-              <option value="published">Yayında</option>
-              <option value="draft">Taslak (Sadece siz görürsünüz)</option>
-            </select>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Başlık</label>
+              <input required value={title} onChange={handleTitleChange} className="w-full border px-4 py-3 rounded-xl" />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">URL (Slug)</label>
+              <input required value={slug} onChange={handleSlugChange} className="w-full border px-4 py-3 rounded-xl bg-gray-50" />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Kategori</label>
+              <input required value={category} onChange={e=>setCategory(e.target.value)} className="w-full border px-4 py-3 rounded-xl" />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Durum</label>
+              <select value={status} onChange={e=>setStatus(e.target.value)} className="w-full border px-4 py-3 rounded-xl">
+                <option value="published">Yayında</option>
+                <option value="draft">Taslak (Sadece siz görürsünüz)</option>
+              </select>
+            </div>
+          </div>
+
+          {/* YENİ: SEO Alanları */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 p-5 bg-blue-50/50 border border-blue-100 rounded-2xl">
+            <div className="md:col-span-2"><h3 className="font-bold text-[#006699]">SEO Ayarları (Opsiyonel)</h3><p className="text-xs text-gray-500">Boş bırakırsanız, site ayarlarındaki genel SEO bilgileri veya yazı başlığı kullanılır.</p></div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Meta Başlık (Title)</label>
+              <input placeholder="Arama motorlarında görünecek başlık" value={metaTitle} onChange={e=>setMetaTitle(e.target.value)} className="w-full border px-4 py-3 rounded-xl" />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Meta Açıklama (Description)</label>
+              <input placeholder="Kısa bir özet yazın" value={metaDescription} onChange={e=>setMetaDescription(e.target.value)} className="w-full border px-4 py-3 rounded-xl" />
+            </div>
           </div>
 
           <div className="mb-6 flex gap-4 items-center">

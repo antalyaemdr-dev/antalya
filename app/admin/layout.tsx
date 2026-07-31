@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { 
   LayoutDashboard, Home, User, Briefcase, FileText, 
-  Star, ClipboardList, Calendar, Settings, LogOut, Lock
+  Star, ClipboardList, Calendar, Settings, LogOut, Lock, ExternalLink
 } from "lucide-react";
 
 const menuItems = [
@@ -136,8 +136,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           ))}
         </nav>
 
-        {/* Çıkış Yap Butonu */}
-        <div className="p-4 border-t border-white/10">
+        {/* Alt Kısım: Siteyi Görüntüle ve Çıkış Yap Butonları */}
+        <div className="p-4 border-t border-white/10 space-y-2">
+          <a href="/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 w-full px-4 py-3 rounded-xl font-bold text-[#e6c15c] hover:bg-white/5 transition-all">
+            <ExternalLink size={20} /> Siteyi Görüntüle
+          </a>
           <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-3 rounded-xl font-bold text-red-400 hover:bg-red-400/10 transition-all">
             <LogOut size={20} /> Çıkış Yap
           </button>

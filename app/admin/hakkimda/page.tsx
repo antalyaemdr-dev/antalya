@@ -3,10 +3,9 @@
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { supabase } from "../../../lib/supabase";
-import { Save, Image as ImageIcon, PlusCircle, Trash2 } from "lucide-react";
+import { Save, Image as ImageIcon, PlusCircle, Trash2, Search } from "lucide-react";
 import "react-quill-new/dist/quill.snow.css";
 
-// Editörü SSR hatası almamak için dinamik yüklüyoruz
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
 export default function HakkimdaYonetimi() {
@@ -14,10 +13,14 @@ export default function HakkimdaYonetimi() {
   
   // Temel Alanlar
   const [title, setTitle] = useState("");
-  const [shortBio, setShortBio] = useState(""); // Artık bu alan da editörden beslenecek
+  const [shortBio, setShortBio] = useState(""); 
   const [content, setContent] = useState(""); 
   const [detailedInfo, setDetailedInfo] = useState(""); 
   const [imageUrl, setImageUrl] = useState("");
+  
+  // SEO Alanları
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
   
   // JSON (Liste) Alanları
   const [educations, setEducations] = useState<any[]>([]);
@@ -37,10 +40,11 @@ export default function HakkimdaYonetimi() {
       setImageUrl(data.image_url || "");
       setEducations(data.educations || []);
       setCertificates(data.certificates || []);
+      setMetaTitle(data.meta_title || "");              // YENİ
+      setMetaDescription(data.meta_description || "");  // YENİ
     }
   };
 
-  // GENEL RESİM YÜKLEME (Profil & Sertifika)
   const uploadImage = async (file: File) => {
     const fileExt = file.name.split('.').pop();
     const fileName = `img-${Math.random()}.${fileExt}`;
@@ -50,7 +54,6 @@ export default function HakkimdaYonetimi() {
     return data.publicUrl;
   };
 
-  // EĞİTİM YÖNETİMİ
   const addEducation = () => setEducations([...educations, { year: "", title: "", school: "" }]);
   const removeEducation = (index: number) => setEducations(educations.filter((_, i) => i !== index));
   const updateEducation = (index: number, field: string, value: string) => {
@@ -59,7 +62,6 @@ export default function HakkimdaYonetimi() {
     setEducations(newEdu);
   };
 
-  // SERTİFİKA YÖNETİMİ
   const handleCertUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     try {
@@ -81,7 +83,9 @@ export default function HakkimdaYonetimi() {
       detailed_info: detailedInfo, 
       image_url: imageUrl, 
       educations, 
-      certificates
+      certificates,
+      meta_title: metaTitle,              // YENİ
+      meta_description: metaDescription   // YENİ
     }).eq("id", 1);
 
     if (!error) alert("Başarıyla kaydedildi!");
@@ -103,6 +107,23 @@ export default function HakkimdaYonetimi() {
 
       <div className="space-y-8">
         
+        {/* YENİ: SEO ALANI */}
+        <div className="bg-blue-50/50 p-8 rounded-2xl shadow-sm border border-blue-100">
+          <h2 className="text-xl font-bold text-[#006699] mb-6 border-b border-blue-200 pb-4 flex items-center gap-2">
+            <Search size={24} /> Hakkımda Sayfası SEO Ayarları
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Meta Başlık (Title)</label>
+              <input type="text" value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} className="w-full px-4 py-3 rounded-xl border outline-none focus:border-[#006699]" placeholder="Opsiyonel" />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Meta Açıklama (Description)</label>
+              <input type="text" value={metaDescription} onChange={(e) => setMetaDescription(e.target.value)} className="w-full px-4 py-3 rounded-xl border outline-none focus:border-[#006699]" placeholder="Kısa özet..." />
+            </div>
+          </div>
+        </div>
+
         {/* 1. BÖLÜM: TEMEL BİLGİLER */}
         <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
           <h2 className="text-xl font-bold text-[#031321] mb-6 border-b pb-4">1. Hero Alanı (Üst Kısım)</h2>
