@@ -3,6 +3,7 @@ import { Nunito } from "next/font/google";
 import "./globals.css";
 import CookieConsent from "@/components/CookieConsent";
 import { GoogleAnalytics } from '@next/third-parties/google';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 
 const nunito = Nunito({
@@ -31,6 +32,7 @@ export default function RootLayout({
         {children}
         <CookieConsent /> {/* Çerez uyarısı artık body içinde ve görünür durumda */}
         <GoogleAnalytics gaId="G-2BNB10EW26" />
+        <SpeedInsights />
       </body>
     </html>
   );
